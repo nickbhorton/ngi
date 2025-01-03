@@ -10,3 +10,9 @@ compile_commands.json
 CTestTestfile.cmake
 _deps
 CMakeUserPresets.json
+build
+
+deps/glad/gl.h
+
+.clang*
+.cache

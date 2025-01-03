@@ -1,2 +1,3 @@
-# ngi
-Nick's Graphics Interface (ngi): An open source graphics interface for quick graphics application development. 
+# Nick's Graphics Interface
+- OpenGL loading library of choice is GLAD
+- GL context library of choice is GLFW
