@@ -12,7 +12,8 @@ _deps
 CMakeUserPresets.json
 build
 
-deps/glad/gl.h
+deps/glad/*
 
 .clang*
 .cache
+

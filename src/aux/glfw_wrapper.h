@@ -1,5 +1,4 @@
-#ifndef GLFW_WRAPPER_HEADER
-#define GLFW_WRAPPER_HEADER
+#pragma once
 
 // ensures that glfw3.h does not include OpenGL headers
 #include <glad/gl.h>
@@ -25,6 +24,5 @@ public:
 
     Window generate_window(int width, int height);
 };
-} // namespace ngi::glfw
 
-#endif
+} // namespace ngi::glfw

@@ -1,5 +1,4 @@
-#define GLAD_GL_IMPLEMENTATION
-#include "glfw_wrapper.h"
+#include "aux/glfw_wrapper.h"
 
 int main()
 {
