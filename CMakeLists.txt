@@ -17,11 +17,12 @@ add_subdirectory(src/aux)
 # main executable
 add_executable(main)
 
-target_sources(main PRIVATE src/main.cpp) 
+target_sources(main PRIVATE src/main.cpp src/gl/buffer.h src/gl/shader.h
+    src/gl/shader_object.cpp src/gl/shader_program.cpp) 
 
 target_include_directories(main PRIVATE SYSTEM deps)
 
-target_include_directories(main PRIVATE src)
+target_include_directories(main PRIVATE src arrayalgebra)
 
 target_link_libraries(main PRIVATE ngi_aux glfw OpenGL::GL)
 
