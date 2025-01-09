@@ -66,7 +66,8 @@ void GLAPIENTRY gl_error_callback(
                 "ngi::gl::error",
                 std::to_string(id) + std::string(" severity: ") + severity_s +
                     std::string(" source: ") + source_s +
-                    std::string(" message: ") + std::string(message)
+                    std::string(" message: ") +
+                    std::string(message).substr(0, length - 1)
             );
             break;
         default:
@@ -75,11 +76,11 @@ void GLAPIENTRY gl_error_callback(
                 "ngi::gl::error_callback",
                 std::to_string(id) + std::string(" severity: ") + severity_s +
                     std::string(" source: ") + source_s +
-                    std::string(" message: ") + std::string(message)
+                    std::string(" message: ") +
+                    std::string(message).substr(0, length - 1)
             );
         }
-        glfwTerminate();
-        std::exit(1);
+        throw 2;
         break;
 
     case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
@@ -88,7 +89,8 @@ void GLAPIENTRY gl_error_callback(
             "ngi::gl::undefined_behavior",
             std::to_string(id) + std::string(" severity: ") + severity_s +
                 std::string(" source: ") + source_s +
-                std::string(" message: ") + std::string(message)
+                std::string(" message: ") +
+                std::string(message).substr(0, length - 1)
         );
         break;
 
@@ -98,7 +100,8 @@ void GLAPIENTRY gl_error_callback(
             "ngi::gl::deprecated_behavior",
             std::to_string(id) + std::string(" severity: ") + severity_s +
                 std::string(" source: ") + source_s +
-                std::string(" message: ") + std::string(message)
+                std::string(" message: ") +
+                std::string(message).substr(0, length - 1)
         );
         break;
     case GL_DEBUG_TYPE_PERFORMANCE:
@@ -107,7 +110,8 @@ void GLAPIENTRY gl_error_callback(
             "ngi::gl::performance",
             std::to_string(id) + std::string(" severity: ") + severity_s +
                 std::string(" source: ") + source_s +
-                std::string(" message: ") + std::string(message)
+                std::string(" message: ") +
+                std::string(message).substr(0, length - 1)
         );
         break;
     case GL_DEBUG_TYPE_PORTABILITY:
@@ -116,7 +120,8 @@ void GLAPIENTRY gl_error_callback(
             "ngi::gl::portability",
             std::to_string(id) + std::string(" severity: ") + severity_s +
                 std::string(" source: ") + source_s +
-                std::string(" message: ") + std::string(message)
+                std::string(" message: ") +
+                std::string(message).substr(0, length - 1)
         );
         break;
     case GL_DEBUG_TYPE_MARKER:
@@ -128,7 +133,8 @@ void GLAPIENTRY gl_error_callback(
             "ngi::gl::other_message",
             std::to_string(id) + std::string(" severity: ") + severity_s +
                 std::string(" source: ") + source_s +
-                std::string(" message: ") + std::string(message)
+                std::string(" message: ") +
+                std::string(message).substr(0, length - 1)
         );
     }
 }
@@ -143,8 +149,7 @@ void glfw_error_callback(int error, const char* desc)
         std::to_string(error) + std::string(" ") + std::string(desc)
     );
 #endif
-    glfwTerminate();
-    std::exit(1);
+    throw 2;
 }
 
 Wrapper::Wrapper()
@@ -204,8 +209,7 @@ Window Wrapper::generate_window(int width, int height, GLFWkeyfun callback)
             "gladLoadGL() returned 0"
         );
 #endif
-        glfwTerminate();
-        std::exit(1);
+        throw 2;
     }
 #ifdef NGI_LOG
     glog.add(

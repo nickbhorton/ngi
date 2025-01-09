@@ -1,6 +1,9 @@
 #include "shader.h"
 
-#include <iostream>
+#ifdef NGI_LOG
+#include "log/log.h"
+extern Log glog;
+#endif // DEBUG
 
 using namespace ngi::gl;
 
@@ -15,7 +18,13 @@ void report_program_info_log(GLuint name, std::string const& msg)
         &info_log_length,
         error_log.data()
     );
-    std::cerr << msg << ": " << error_log;
+#ifdef NGI_LOG
+    glog.add(
+        LogLevel::CriticalError,
+        "ngi::gl::shader_program::link",
+        msg + std::string(": ") + error_log
+    );
+#endif
 }
 
 ShaderProgram::ShaderProgram(std::vector<std::pair<std::string, GLenum>> shaders
@@ -23,8 +32,15 @@ ShaderProgram::ShaderProgram(std::vector<std::pair<std::string, GLenum>> shaders
 {
     name = glCreateProgram();
     if (!name) {
-        std::cerr << "Shader linking error: glCreateProgram() returned zero\n";
-        std::exit(EXIT_FAILURE);
+#ifdef NGI_LOG
+        glog.add(
+            LogLevel::CriticalError,
+            "ngi::gl::shader_program::Constructor",
+            std::to_string(name) +
+                std::string(" glCreateProgram() returned zero")
+        );
+#endif
+        throw 1;
     }
     for (auto const& [filename, shader_type] : shaders) {
         ShaderObject so(filename, shader_type);
@@ -34,6 +50,13 @@ ShaderProgram::ShaderProgram(std::vector<std::pair<std::string, GLenum>> shaders
         this->attatch(so);
     }
     this->link();
+#ifdef NGI_LOG
+    glog.add(
+        LogLevel::Status,
+        "ngi::gl::shader_program::Constructor",
+        std::to_string(name) + std::string(" linked successfully")
+    );
+#endif
 }
 
 void ShaderProgram::attatch(ShaderObject const& shader)
@@ -48,7 +71,7 @@ void ShaderProgram::link()
     glGetProgramiv(name, GL_LINK_STATUS, &link_status);
     if (link_status != GL_TRUE) {
         report_program_info_log(name, "Shader Link Error");
-        std::exit(EXIT_FAILURE);
+        throw 1;
     }
 }
 
@@ -56,7 +79,17 @@ void ShaderProgram::bind() { glUseProgram(name); }
 
 auto ShaderProgram::get_name() const -> GLuint { return name; }
 
-ShaderProgram::~ShaderProgram() { glDeleteProgram(name); }
+ShaderProgram::~ShaderProgram()
+{
+    glDeleteProgram(name);
+#ifdef NGI_LOG
+    glog.add(
+        LogLevel::Status,
+        "ngi::gl::shader_program::Destructor",
+        std::to_string(name) + std::string(" was destructed")
+    );
+#endif
+}
 
 void ShaderProgram::update_uniform_1f(
     std::string const& uniform_name,

@@ -18,7 +18,7 @@ add_subdirectory(src/aux)
 add_executable(main)
 
 target_sources(main PRIVATE src/main.cpp src/gl/buffer.h src/gl/shader.h
-    src/gl/shader_object.cpp src/gl/shader_program.cpp) 
+    src/gl/shader_object.cpp src/gl/shader_program.cpp src/gl/vao.cpp) 
 
 target_include_directories(main PRIVATE SYSTEM deps)
 

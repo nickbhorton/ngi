@@ -3,6 +3,11 @@
 #include <glad/gl.h>
 #include <vector>
 
+#ifdef NGI_LOG
+#include "log/log.h"
+extern Log glog;
+#endif // DEBUG
+
 namespace ngi::gl
 {
 
@@ -48,6 +53,14 @@ StaticBuffer<T>::StaticBuffer(T buffer_data, GLenum bind_target)
 {
     glCreateBuffers(1, &this->name);
     glNamedBufferStorage(name, this->data_size, &buffer_data, 0);
+#ifdef NGI_LOG
+    glog.add(
+        LogLevel::Status,
+        "ngi::gl::buffer::Constructor",
+        std::to_string(this->name) + std::string(" was constructed with ") +
+            std::to_string(data_size) + std::string(" bytes")
+    );
+#endif
 }
 
 // generic vector constructor
@@ -58,6 +71,15 @@ StaticBuffer<T>::StaticBuffer(std::vector<T> buffer_data, GLenum bind_target)
 {
     glCreateBuffers(1, &name);
     glNamedBufferStorage(name, this->data_size, buffer_data.data(), 0);
+#ifdef NGI_LOG
+    glog.add(
+        LogLevel::Status,
+        "ngi::gl::buffer::Constructor",
+        std::to_string(this->name) + std::string(" was constructed with ") +
+            std::to_string(sizeof(T)) + std::string("bytes ") +
+            std::to_string(buffer_data.size()) + std::string(" times")
+    );
+#endif
 }
 
 // move constructor
@@ -100,6 +122,13 @@ template <typename T> StaticBuffer<T>::~StaticBuffer()
 {
     if (!moved) {
         glDeleteBuffers(1, &name);
+#ifdef NGI_LOG
+        glog.add(
+            LogLevel::Status,
+            "ngi::gl::buffer::Destructor",
+            std::to_string(this->name) + std::string(" was destructed")
+        );
+#endif
     }
 }
 

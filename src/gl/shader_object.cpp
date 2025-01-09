@@ -1,7 +1,6 @@
 #include "shader.h"
 
 #include <fstream>
-#include <iostream>
 
 #ifdef NGI_LOG
 #include "log/log.h"
@@ -21,28 +20,43 @@ void report_shader_info_log(GLuint name, std::string const& msg)
         &info_log_length,
         (GLchar*)error_log.data()
     );
-    std::cerr << msg << ": " << error_log;
+#ifdef NGI_LOG
+    glog.add(
+        LogLevel::CriticalError,
+        "ngi::gl::shader_object::Constructor",
+        msg + std::string(": ") + error_log
+    );
+#endif
 }
 
-// TODO: error handling for gl*() functions
 ShaderObject::ShaderObject(
     std::string const& shader_filename,
     GLenum shader_type
 )
+    : moved(false)
 {
-    moved = false;
     name = glCreateShader(shader_type);
     if (!name) {
-        std::cerr << "Shader compilation error " << shader_filename
-                  << ": glCreateShader() returned zero\n";
-        std::exit(EXIT_FAILURE);
+#ifdef NGI_LOG
+        glog.add(
+            LogLevel::CriticalError,
+            "ngi::gl::shader_object::Constructor",
+            shader_filename + std::string(" glCreateShader() return 0")
+        );
+#endif
+        throw 1;
     }
     std::fstream file{};
     file.open(shader_filename);
     if (file.bad() || file.fail() || !file.good()) {
-        std::cerr << "Shader compilation error " << shader_filename
-                  << ": could not find file " << shader_filename << "\n";
-        std::exit(EXIT_FAILURE);
+#ifdef NGI_LOG
+        glog.add(
+            LogLevel::CriticalError,
+            "ngi::gl::shader_object::Constructor",
+            shader_filename + std::string(" could not find file")
+        );
+#endif
+        throw 1;
     }
     std::string shader_source{};
     char file_byte{};
@@ -66,8 +80,16 @@ ShaderObject::ShaderObject(
             name,
             "Shader Compilation Error " + shader_filename
         );
-        std::exit(EXIT_FAILURE);
+        throw 1;
     }
+#ifdef NGI_LOG
+    glog.add(
+        LogLevel::Status,
+        "ngi::gl::shader_object::Constructor",
+        std::to_string(name) + std::string(" aka ") + shader_filename +
+            std::string(" compiled successfully")
+    );
+#endif
 }
 
 auto ShaderObject::get_name() const -> GLuint { return name; }
@@ -75,11 +97,19 @@ auto ShaderObject::get_name() const -> GLuint { return name; }
 ShaderObject::~ShaderObject()
 {
     if (!moved) {
+#ifdef NGI_LOG
+        glog.add(
+            LogLevel::Status,
+            "ngi::gl::shader_object::Destructor",
+            std::to_string(name) + std::string(" was destructed")
+        );
+#endif
         glDeleteShader(name);
     }
 }
 
-ShaderObject::ShaderObject(ShaderObject&& other) noexcept : name(other.name)
+ShaderObject::ShaderObject(ShaderObject&& other) noexcept
+    : name(other.name), moved(false)
 {
     other.moved = true;
 }
