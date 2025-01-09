@@ -13,6 +13,7 @@ endif()
 
 add_subdirectory(deps)
 add_subdirectory(src/aux)
+add_subdirectory(src/aux/font)
 
 # main executable
 add_executable(red_triangle)

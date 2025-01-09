@@ -20,6 +20,9 @@ key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 
 int main()
 {
+    // try catch abstraction because throwing ensures destruction of all
+    // objects. This is primarily important for the log class which outputs
+    // somewhere on its destruction.
     try {
         ngi::glfw::Wrapper wrap{};
         ngi::glfw::Window window{wrap.generate_window(640, 480, key_callback)};
