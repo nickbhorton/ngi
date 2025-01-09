@@ -15,14 +15,14 @@ add_subdirectory(deps)
 add_subdirectory(src/aux)
 
 # main executable
-add_executable(main)
+add_executable(red_triangle)
 
-target_sources(main PRIVATE src/main.cpp src/gl/buffer.h src/gl/shader.h
+target_sources(red_triangle PRIVATE src/red_triangle.cpp src/gl/buffer.h src/gl/shader.h
     src/gl/shader_object.cpp src/gl/shader_program.cpp src/gl/vao.cpp) 
 
-target_include_directories(main PRIVATE SYSTEM deps)
+target_include_directories(red_triangle PRIVATE SYSTEM deps)
 
-target_include_directories(main PRIVATE src arrayalgebra)
+target_include_directories(red_triangle PRIVATE src arrayalgebra)
 
-target_link_libraries(main PRIVATE ngi_aux glfw OpenGL::GL)
+target_link_libraries(red_triangle PRIVATE ngi_aux glfw OpenGL::GL)
 
