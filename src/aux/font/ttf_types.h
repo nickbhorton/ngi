@@ -46,12 +46,16 @@ struct HeadTable {
     int16_t glyph_data_format;
 };
 
-struct SimpleGlyph {
+struct GlyphCommon {
     int16_t number_of_contours;
     FWord x_min;
     FWord y_min;
     FWord x_max;
     FWord y_max;
+};
+
+struct SimpleGlyph {
+    GlyphCommon gc;
     std::vector<uint16_t> end_points_of_contours;
     uint16_t instruction_length;
     std::vector<uint8_t> instructions;
@@ -97,10 +101,16 @@ struct CmapSubtableFormat4 {
     std::vector<uint16_t> id_delta;
     std::vector<uint16_t> id_range_offset;
     std::vector<uint16_t> glyph_index_array;
+
+    uint32_t get_glyph_index(uint16_t unicode_value);
 };
 
 struct CmapTable {
     uint16_t version;
     uint16_t number_subtables;
     std::vector<CmapSubtable> subtables;
+};
+
+struct LocaTable {
+    std::vector<uint32_t> offsets;
 };

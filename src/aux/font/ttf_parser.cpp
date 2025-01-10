@@ -52,9 +52,8 @@ int main()
         */
     }
 
+    // HEAD
     HeadTable head_table{};
-    CmapTable cmap_table{};
-    MaxpTable maxp_table{};
     for (auto i = 0; i < table_directory.size(); i++) {
         if (std::string(table_directory[i].tag, 4) == "head") {
             // no idea why +4
@@ -87,7 +86,14 @@ int main()
             std::cout << "y: " << head_table.y_max << " " << head_table.y_max
                       << "\n";
             */
-        } else if (std::string(table_directory[i].tag, 4) == "cmap") {
+        }
+    }
+
+    // CMAP
+    CmapTable cmap_table{};
+    std::vector<CmapSubtableFormat4> cmap_format4s{};
+    for (auto i = 0; i < table_directory.size(); i++) {
+        if (std::string(table_directory[i].tag, 4) == "cmap") {
             font_file.seekg(table_directory[i].offset, std::ios::beg);
             cmap_table.version = read_type<uint16_t>(font_file);
             cmap_table.number_subtables = read_type<uint16_t>(font_file);
@@ -166,10 +172,12 @@ int main()
                         sizeof(uint16_t) * cmap_format4.id_delta.size();
                     size_of_subtable +=
                         sizeof(uint16_t) * cmap_format4.id_range_offset.size();
+                    /*
                     std::cout << "cmap subtable format 4\n";
                     std::cout << "\tlength: " << cmap_format4.length << "\n";
                     std::cout << "\tseg count " << cmap_format4.seg_count_x2 / 2
                               << "\n";
+                              */
                     size_t size_diff{cmap_format4.length - size_of_subtable};
                     for (auto k = 0; k < size_diff / 2; k++) {
                         cmap_format4.glyph_index_array.push_back(
@@ -178,7 +186,7 @@ int main()
                         // std::cout << cmap_format4.glyph_index_array[k] << "
                         // ";
                     }
-                    std::vector<uint32_t> unicode_nums{};
+                    /*
                     for (auto k = 0; k < cmap_format4.seg_count_x2 / 2; k++) {
                         std::cout
                             << "[" << cmap_format4.start_code[k] << ", "
@@ -186,26 +194,21 @@ int main()
                             << "] delta:" << cmap_format4.id_delta[k]
                             << " offset:" << cmap_format4.id_range_offset[k]
                             << "\n";
-                        for (int g =
-                                 static_cast<int>(cmap_format4.start_code[k]);
-                             static_cast<int>(g) <=
-                             static_cast<int>(cmap_format4.end_code[k]);
-                             g++) {
-                            // std::cout << g + cmap_format4.id_delta[k] <<
-                            // "\n";
-                            unicode_nums.push_back(
-                                g + cmap_format4.id_delta[k]
-                            );
-                        }
                     }
                     // std::cout << "\n";
                     std::cout << "gliph_index_array size: "
                               << cmap_format4.glyph_index_array.size() << "\n";
-                    std::cout << "unicode_nums size: " << unicode_nums.size()
-                              << "\n";
+                              */
+                    cmap_format4s.push_back(cmap_format4);
                 }
             }
-        } else if (std::string(table_directory[i].tag, 4) == "maxp") {
+        }
+    }
+
+    // MAXP
+    MaxpTable maxp_table{};
+    for (auto i = 0; i < table_directory.size(); i++) {
+        if (std::string(table_directory[i].tag, 4) == "maxp") {
             font_file.seekg(table_directory[i].offset + 4, std::ios::beg);
             maxp_table.version = read_type<Fixed>(font_file);
             maxp_table.number_glyphs = read_type<uint16_t>(font_file);
@@ -225,70 +228,108 @@ int main()
             maxp_table.max_component_depth = read_type<uint16_t>(font_file);
             std::cout << "number of glyphs: " << maxp_table.number_glyphs
                       << "\n";
+            /*
             std::cout << "max number of points: " << maxp_table.max_points
                       << "\n";
-        } else if (std::string(table_directory[i].tag, 4) == "glyf") {
-            /*
-            // std::cout << table_directory[i].offset << "\n";
-            font_file.seekg(table_directory[i].offset, std::ios::beg);
-            SimpleGlyph sg{};
-            sg.number_of_contours = read_type<int16_t>(font_file);
-            sg.x_min = read_type<FWord>(font_file);
-            sg.y_min = read_type<FWord>(font_file);
-            sg.x_max = read_type<FWord>(font_file);
-            sg.y_max = read_type<FWord>(font_file);
-            std::cout << sg.number_of_contours << "\n";
-            std::cout << sg.x_min << " " << sg.x_max << "\n";
-            std::cout << sg.y_min << " " << sg.y_max << "\n";
-            for (auto k = 0; k < sg.number_of_contours; k++) {
-                sg.end_points_of_contours.push_back(
-                    read_type<uint16_t>(font_file)
-                );
-                std::cout << sg.end_points_of_contours[k] << "\n";
-            }
-            sg.instruction_length = read_type<uint16_t>(font_file);
-            std::cout << "instruction length: " << sg.instruction_length
-                      << "\n";
-            for (auto k = 0; k < sg.instruction_length; k++) {
-                sg.instructions.push_back(read_type<uint8_t>(font_file));
-            }
-            for (auto k = 0; k < 8; k++) {
-                sg.flags.push_back(read_type<uint8_t>(font_file));
-                if (sg.flags[k] & 0b0000'0001) {
-                    std::cout << "[On Curve] ";
-                }
-                if (sg.flags[k] & 0b0000'0010) {
-                    std::cout << "[x-Short Vector] ";
-                }
-                if (sg.flags[k] & 0b0000'0100) {
-                    std::cout << "[y-Short Vector] ";
-                }
-                if (sg.flags[k] & 0b0000'1000) {
-                    std::cout << "[Repeat] ";
-                }
-                if ((sg.flags[k] & 0b0001'0000) &&
-                    (sg.flags[k] & 0b0000'0010)) {
-                    std::cout << "[x-Short positive] ";
-                } else if ((sg.flags[k] & 0b0001'0000) &&
-                           !(sg.flags[k] & 0b0000'0010)) {
-                    std::cout << "[x-Short negitive] ";
-                } else if (!(sg.flags[k] & 0b0001'0000) &&
-                           (sg.flags[k] & 0b0000'0010)) {
-                    std::cout << "[x same as previous] ";
-                }
-                if ((sg.flags[k] & 0b0010'0000) &&
-                    (sg.flags[k] & 0b0000'0010)) {
-                    std::cout << "[y-Short positive] ";
-                } else if ((sg.flags[k] & 0b0010'0000) &&
-                           !(sg.flags[k] & 0b0000'0010)) {
-                    std::cout << "[y-Short negitive] ";
-                } else if (!(sg.flags[k] & 0b0010'0000) &&
-                           (sg.flags[k] & 0b0000'0010)) {
-                    std::cout << "[y same as previous] ";
-                }
-                std::cout << std::bitset<8>(sg.flags[k]) << "\n";
-            }
-            */
+                      */
         }
     }
+
+    // LOCA
+    LocaTable loca_table{};
+    for (auto i = 0; i < table_directory.size(); i++) {
+        if (std::string(table_directory[i].tag, 4) == "loca") {
+            font_file.seekg(table_directory[i].offset, std::ios::beg);
+            for (size_t k = 0; k < maxp_table.number_glyphs; k++) {
+                if (head_table.index_to_loc_format) {
+                    auto offset{read_type<uint32_t>(font_file)};
+                    loca_table.offsets.push_back(offset);
+                } else {
+                    loca_table.offsets.push_back(read_type<uint16_t>(font_file)
+                    );
+                }
+            }
+        }
+    }
+
+    // GLYF
+    for (auto i = 0; i < table_directory.size(); i++) {
+        if (std::string(table_directory[i].tag, 4) == "glyf") {
+            for (uint32_t k = 'A'; k < 'B'; k++) {
+                std::cout << (char)k << ": ";
+                GlyphCommon gc{};
+                auto glyph_offset =
+                    loca_table.offsets[cmap_format4s[0].get_glyph_index(k)];
+                font_file.seekg(
+                    table_directory[i].offset + glyph_offset,
+                    std::ios::beg
+                );
+                gc.number_of_contours = read_type<int16_t>(font_file);
+                gc.x_min = read_type<FWord>(font_file);
+                gc.y_min = read_type<FWord>(font_file);
+                gc.x_max = read_type<FWord>(font_file);
+                gc.y_max = read_type<FWord>(font_file);
+                std::cout << glyph_offset << "  " << gc.number_of_contours
+                          << " [" << gc.x_min << ", " << gc.x_max << "] ["
+                          << gc.y_min << ", " << gc.y_max << "]";
+                if (gc.number_of_contours > 0) {
+                    SimpleGlyph sg{};
+                    sg.gc = gc;
+                    for (size_t n = 0;
+                         n < static_cast<size_t>(sg.gc.number_of_contours);
+                         n++) {
+                        sg.end_points_of_contours.push_back(
+                            read_type<uint16_t>(font_file)
+                        );
+                    }
+
+                    std::cout << " {";
+                    for (size_t n = 0;
+                         n < static_cast<size_t>(sg.gc.number_of_contours);
+                         n++) {
+                        std::cout << sg.end_points_of_contours[n]
+                                  << (n != static_cast<size_t>(
+                                               sg.gc.number_of_contours
+                                           ) - 1
+                                          ? ", "
+                                          : "");
+                    }
+                    std::cout << "} ";
+
+                    sg.instruction_length = read_type<uint16_t>(font_file);
+                    std::cout << sg.instruction_length;
+                    for (size_t n = 0; n < sg.instruction_length; n++) {
+                        sg.instructions.push_back(read_type<uint8_t>(font_file)
+                        );
+                    }
+                    std::cout << "\n";
+                    for (size_t n = 0;
+                         n < sg.end_points_of_contours
+                                 [sg.end_points_of_contours.size() - 1];
+                         n++) {
+                        sg.flags.push_back(read_type<uint8_t>(font_file));
+                        std::cout << std::bitset<8>(sg.flags[n]) << "\n";
+                    }
+                    // using flags get x and y coords
+                }
+            }
+        }
+    }
+}
+
+uint32_t CmapSubtableFormat4::get_glyph_index(uint16_t unicode_value)
+{
+    if (unicode_value == 0xFFFF) {
+        return 0;
+    }
+    for (size_t i = 0; i < end_code.size(); i++) {
+        if (unicode_value <= end_code[i]) {
+            if (unicode_value >= start_code[i]) {
+                return id_delta[i] + id_range_offset[i] + unicode_value;
+            } else {
+                return 0;
+            }
+        }
+    }
+    return 0;
 }
