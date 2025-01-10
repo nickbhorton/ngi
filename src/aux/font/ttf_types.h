@@ -4,7 +4,7 @@
 #include <variant>
 #include <vector>
 
-typedef uint16_t Fixed;
+typedef uint32_t Fixed;
 typedef int16_t FWord;
 typedef int64_t LongDateTime;
 
@@ -60,8 +60,8 @@ struct SimpleGlyph {
     uint16_t instruction_length;
     std::vector<uint8_t> instructions;
     std::vector<uint8_t> flags;
-    std::vector<std::variant<uint8_t, int16_t>> x_coords;
-    std::vector<std::variant<uint8_t, int16_t>> y_coords;
+    std::vector<int16_t> x_coords;
+    std::vector<int16_t> y_coords;
 };
 
 struct MaxpTable {

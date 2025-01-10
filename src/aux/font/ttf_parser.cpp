@@ -57,7 +57,7 @@ int main()
     for (auto i = 0; i < table_directory.size(); i++) {
         if (std::string(table_directory[i].tag, 4) == "head") {
             // no idea why +4
-            font_file.seekg(table_directory[i].offset + 4, std::ios::beg);
+            font_file.seekg(table_directory[i].offset, std::ios::beg);
             head_table.version = read_type<Fixed>(font_file);
             head_table.font_revision = read_type<Fixed>(font_file);
             head_table.check_sum_adjustment = read_type<uint32_t>(font_file);
@@ -122,7 +122,7 @@ int main()
                           << subtable.platform_specific_id
                           << " format: " << subtable_format << "\n";
                           */
-                if (subtable_format == 4) {
+                if (subtable_format == 4 && subtable.platform_id == 0) {
                     CmapSubtableFormat4 cmap_format4{};
                     cmap_format4.length = read_type<uint16_t>(font_file);
                     cmap_format4.language = read_type<uint16_t>(font_file);
@@ -209,7 +209,7 @@ int main()
     MaxpTable maxp_table{};
     for (auto i = 0; i < table_directory.size(); i++) {
         if (std::string(table_directory[i].tag, 4) == "maxp") {
-            font_file.seekg(table_directory[i].offset + 4, std::ios::beg);
+            font_file.seekg(table_directory[i].offset, std::ios::beg);
             maxp_table.version = read_type<Fixed>(font_file);
             maxp_table.number_glyphs = read_type<uint16_t>(font_file);
             maxp_table.max_points = read_type<uint16_t>(font_file);
@@ -240,12 +240,14 @@ int main()
     for (auto i = 0; i < table_directory.size(); i++) {
         if (std::string(table_directory[i].tag, 4) == "loca") {
             font_file.seekg(table_directory[i].offset, std::ios::beg);
-            for (size_t k = 0; k < maxp_table.number_glyphs; k++) {
+            for (size_t k = 0; k <= maxp_table.number_glyphs; k++) {
                 if (head_table.index_to_loc_format) {
                     auto offset{read_type<uint32_t>(font_file)};
                     loca_table.offsets.push_back(offset);
                 } else {
-                    loca_table.offsets.push_back(read_type<uint16_t>(font_file)
+                    loca_table.offsets.push_back(
+                        2 *
+                        static_cast<uint32_t>(read_type<uint16_t>(font_file))
                     );
                 }
             }
@@ -275,12 +277,17 @@ int main()
                 if (gc.number_of_contours > 0) {
                     SimpleGlyph sg{};
                     sg.gc = gc;
+                    size_t num_points{0};
                     for (size_t n = 0;
                          n < static_cast<size_t>(sg.gc.number_of_contours);
                          n++) {
-                        sg.end_points_of_contours.push_back(
-                            read_type<uint16_t>(font_file)
+                        uint16_t end_contour_index =
+                            read_type<uint16_t>(font_file);
+                        num_points = std::max(
+                            static_cast<size_t>(end_contour_index + 1),
+                            num_points
                         );
+                        sg.end_points_of_contours.push_back(end_contour_index);
                     }
 
                     std::cout << " {";
@@ -294,7 +301,7 @@ int main()
                                           ? ", "
                                           : "");
                     }
-                    std::cout << "} ";
+                    std::cout << "} " << "num_points: " << num_points << " ";
 
                     sg.instruction_length = read_type<uint16_t>(font_file);
                     std::cout << sg.instruction_length;
@@ -303,14 +310,95 @@ int main()
                         );
                     }
                     std::cout << "\n";
-                    for (size_t n = 0;
-                         n < sg.end_points_of_contours
-                                 [sg.end_points_of_contours.size() - 1];
-                         n++) {
+                    for (size_t n = 0; n < num_points; n++) {
                         sg.flags.push_back(read_type<uint8_t>(font_file));
-                        std::cout << std::bitset<8>(sg.flags[n]) << "\n";
+                        if (sg.flags[n] & 0b1100'0000) {
+                            std::cerr << "glyph flags have bits set when they "
+                                         "are supposed to be zero\n";
+                        }
+                        uint8_t constexpr REPEAT{0b0000'1000};
+                        if (sg.flags[n] & REPEAT) {
+                            std::cerr << "glyph flags REPEAT was set, this is "
+                                         "not implemented\n";
+                        }
                     }
-                    // using flags get x and y coords
+                    int16_t x_coord_val{0};
+                    for (size_t n = 0; n < sg.flags.size(); n++) {
+                        // std::cout << std::bitset<8>(sg.flags[n]) << "\n";
+                        uint8_t constexpr X_SHORT{0b0000'0010};
+                        uint8_t constexpr X_SAME{0b0001'0000};
+                        if (sg.flags[n] & X_SHORT) {
+                            int16_t diff = static_cast<int16_t>(
+                                read_type<uint8_t>(font_file)
+                            );
+                            if (sg.flags[n] & X_SAME) {
+                                x_coord_val += diff;
+                            } else {
+                                x_coord_val -= diff;
+                            }
+                            sg.x_coords.push_back(x_coord_val);
+                            std::cout << "1 " << diff << " "
+                                      << sg.x_coords[sg.x_coords.size() - 1]
+                                      << "\n";
+                        } else if (sg.flags[n] & X_SAME) {
+                            // this is not tested to work
+                            std::cout << "X_SAME\n";
+                            sg.x_coords.push_back(
+                                sg.x_coords[sg.x_coords.size() - 1]
+                            );
+                        } else {
+                            int16_t diff = read_type<int16_t>(font_file);
+                            x_coord_val += diff;
+                            sg.x_coords.push_back(x_coord_val);
+                            std::cout << "2 " << diff << " "
+                                      << sg.x_coords[sg.x_coords.size() - 1]
+                                      << "\n";
+                        }
+                    }
+
+                    std::cout << "\n";
+
+                    int16_t y_coord_val{0};
+                    for (size_t n = 0; n < sg.flags.size(); n++) {
+                        uint8_t constexpr Y_SHORT{0b0000'0100};
+                        uint8_t constexpr Y_SAME{0b0010'0000};
+                        if (sg.flags[n] & Y_SHORT) {
+                            int16_t diff = static_cast<int16_t>(
+                                read_type<uint8_t>(font_file)
+                            );
+                            if (sg.flags[n] & Y_SAME) {
+                                y_coord_val += diff;
+                            } else {
+                                y_coord_val -= diff;
+                            }
+                            sg.y_coords.push_back(y_coord_val);
+                            std::cout << "1 " << diff << " "
+                                      << sg.y_coords[sg.y_coords.size() - 1]
+                                      << "\n";
+                        } else if (sg.flags[n] & Y_SAME) {
+                            // this is not tested to work
+                            sg.y_coords.push_back(
+                                sg.y_coords[sg.y_coords.size() - 1]
+                            );
+                        } else {
+                            int16_t diff = read_type<int16_t>(font_file);
+                            y_coord_val += diff;
+                            sg.y_coords.push_back(y_coord_val);
+                            std::cout << "2 " << diff << " "
+                                      << sg.y_coords[sg.y_coords.size() - 1]
+                                      << "\n";
+                        }
+                    }
+
+                    std::cout << "x count: " << sg.x_coords.size() << "\n";
+                    std::cout << "y count: " << sg.y_coords.size() << "\n\n";
+                    for (size_t n = 1; n < sg.x_coords.size(); n++) {
+                        std::cout << sg.x_coords[n] << "\n";
+                    }
+                    std::cout << "\n";
+                    for (size_t n = 1; n < sg.y_coords.size(); n++) {
+                        std::cout << sg.y_coords[n] << "\n";
+                    }
                 }
             }
         }
