@@ -33,12 +33,30 @@ void VertexArrayObject::bind()
 
 VertexArrayObject::~VertexArrayObject()
 {
+    if (!moved) {
 #ifdef NGI_LOG
-    glog.add(
-        LogLevel::Status,
-        "ngi::gl::vao::Destructor",
-        std::to_string(name) + std::string(" was destructed")
-    );
+        glog.add(
+            LogLevel::Status,
+            "ngi::gl::vao::Destructor",
+            std::to_string(name) + std::string(" was destructed")
+        );
 #endif
-    glDeleteVertexArrays(1, &name);
+        glDeleteVertexArrays(1, &name);
+    }
+}
+
+VertexArrayObject::VertexArrayObject(VertexArrayObject&& other) noexcept
+    : moved(false), name(other.name), shader_name(other.shader_name)
+{
+    other.moved = true;
+}
+
+VertexArrayObject& VertexArrayObject::operator=(VertexArrayObject&& other
+) noexcept
+{
+    moved = false;
+    name = other.name;
+    shader_name = other.shader_name;
+    other.moved = true;
+    return *this;
 }

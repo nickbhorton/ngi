@@ -1,6 +1,7 @@
 #include "bezier.h"
 #include "ttf_types.h"
 
+#include <cassert>
 #include <cstdint>
 #include <fstream>
 #include <iostream>
@@ -11,6 +12,11 @@
 #include <vector>
 
 #include <arpa/inet.h>
+
+// #include "arrayalgebra.h"
+
+namespace ngi::font
+{
 
 template <typename T> T read_type(std::ifstream& stream)
 {
@@ -274,6 +280,7 @@ SimpleGlyph read_simple_glyph(
         sg.instructions.push_back(read_type<uint8_t>(font_file));
     }
     // std::cout << "\n";
+    // std::cout << num_points << "\n";
     for (size_t n = 0; n < num_points; n++) {
         uint8_t flag = read_type<uint8_t>(font_file);
         sg.flags.push_back(flag);
@@ -321,14 +328,50 @@ std::variant<SimpleGlyph, int> read_glyph(
     return 0;
 }
 
-int main()
+std::vector<Contour> get_contours(SimpleGlyph const& g)
 {
-    std::string font_filename{"/usr/share/fonts/TTF/FiraCode-Regular.ttf"};
+    assert(g.flags.size() == g.x_coords.size());
+    assert(g.flags.size() == g.y_coords.size());
+    std::vector<Contour> result{};
+    size_t e = 0;
+    Contour contour{};
+    for (auto i = 0; i < g.flags.size(); i++) {
+        contour.push_back(
+            {{g.x_coords[i], g.y_coords[i]}, ((g.flags[i] & 1) > 0)}
+        );
+        if (g.end_points_of_contours[e] == i) {
+            result.push_back(contour);
+            contour.clear();
+            e++;
+        }
+    }
+    for (auto& c : result) {
+        Contour new_contour{};
+        for (size_t i = 0; i < c.size() - 1; i++) {
+            auto fst = c[i];
+            auto snd = c[i + 1];
+            new_contour.push_back(fst);
+            if (std::get<1>(fst) == std::get<1>(snd)) {
+                int16_t x = (std::get<0>(fst)[0] + std::get<0>(snd)[0]) / 2;
+                int16_t y = (std::get<0>(fst)[1] + std::get<0>(snd)[1]) / 2;
+                new_contour.push_back({{x, y}, !std::get<1>(fst)});
+            }
+            if (i == c.size() - 2) {
+                new_contour.push_back(snd);
+            }
+        }
+        c = new_contour;
+    }
+    return result;
+}
+
+std::vector<SimpleGlyph> get_simple_glyphs(std::string const& font_filename)
+{
     std::ifstream font_file{font_filename};
 
     if (!font_file.is_open() || font_file.bad() || font_file.fail()) {
         std::cerr << font_filename << " did not open\n";
-        return 1;
+        throw 3;
     }
 
     OffsetTable offset_table{read_offset_table(font_file)};
@@ -343,8 +386,6 @@ int main()
         read_cmap_format4(font_file, table_directory, cmap_table, 0)
     };
 
-    std::cout << "glyph count: " << maxp_table.number_glyphs << "\n";
-
     std::vector<SimpleGlyph> simple_glyphs{};
     for (auto k = 0; k < 1 /*loca_table.offsets.size() - 1*/; k++) {
         auto glyph{read_glyph(font_file, table_directory, loca_table, k)};
@@ -352,8 +393,7 @@ int main()
             simple_glyphs.push_back(std::move(std::get<SimpleGlyph>(glyph)));
         }
     }
-    for (auto const& g : simple_glyphs) {
-    }
+    return simple_glyphs;
 }
 
 uint32_t CmapSubtableFormat4::get_glyph_index(uint16_t unicode_value)
@@ -384,3 +424,4 @@ uint32_t CmapSubtableFormat4::get_glyph_index(uint16_t unicode_value)
     }
     return 0;
 }
+} // namespace ngi::font

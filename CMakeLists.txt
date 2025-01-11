@@ -25,5 +25,5 @@ target_include_directories(red_triangle PRIVATE SYSTEM deps)
 
 target_include_directories(red_triangle PRIVATE src arrayalgebra)
 
-target_link_libraries(red_triangle PRIVATE ngi_aux glfw OpenGL::GL)
+target_link_libraries(red_triangle PRIVATE ngi_aux ngi_ttf glfw OpenGL::GL)
 

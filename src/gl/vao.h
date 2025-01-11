@@ -13,6 +13,7 @@ class VertexArrayObject
 {
     GLuint name;
     GLuint shader_name;
+    bool moved;
 
 public:
     VertexArrayObject();
@@ -20,8 +21,8 @@ public:
 
     VertexArrayObject(VertexArrayObject const& other) = delete;
     VertexArrayObject& operator=(VertexArrayObject const& other) = delete;
-    VertexArrayObject(VertexArrayObject&& other) noexcept = delete;
-    VertexArrayObject& operator=(VertexArrayObject&& other) noexcept = delete;
+    VertexArrayObject(VertexArrayObject&& other) noexcept;
+    VertexArrayObject& operator=(VertexArrayObject&& other) noexcept;
 
     template <typename T>
     void attach_buffer_object(

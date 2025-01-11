@@ -1,14 +1,16 @@
-add_executable(ttf_parse)
+add_library(ngi_ttf)
 
 target_sources(
-    ttf_parse 
+    ngi_ttf 
     PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/ttf.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ttf_parser.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ttf_types.h
     ${CMAKE_CURRENT_SOURCE_DIR}/bezier.h
 )
 
 target_include_directories(
-    ttf_parse
+    ngi_ttf
     PRIVATE
     ${CMAKE_SOURCE_DIR}/arrayalgebra
 )
