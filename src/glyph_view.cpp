@@ -53,13 +53,35 @@ int main(int argc, char** argv)
         std::cout << "contour count: " << empty_glyph.size() << "\n";
         for (auto const& c : empty_glyph) {
             std::vector<aa::vec3> vertex_positions{};
-            for (size_t i = 0; i < c.size(); i++) {
-                auto const& [x, y] = std::get<0>(c.at(i));
-                vertex_positions.push_back(
-                    {(static_cast<float>(x) / max_x) - 0.5f,
-                     (static_cast<float>(y) / max_y) - 0.5f,
-                     0.0}
-                );
+            for (size_t i = 0; i < c.size(); i += 2) {
+                // bezier interpolation
+                auto const& [x1, y1] = std::get<0>(c.at(i));
+                auto const& [x2, y2] = std::get<0>(c.at((i + 1) % c.size()));
+                auto const& [x3, y3] = std::get<0>(c.at((i + 2) % c.size()));
+                aa::vec3 p1{
+                    (static_cast<float>(x1) / max_x) - 0.5f,
+                    (static_cast<float>(y1) / max_y) - 0.5f,
+                    0.0
+                };
+                aa::vec3 p2{
+                    (static_cast<float>(x2) / max_x) - 0.5f,
+                    (static_cast<float>(y2) / max_y) - 0.5f,
+                    0.0
+                };
+                aa::vec3 p3{
+                    (static_cast<float>(x3) / max_x) - 0.5f,
+                    (static_cast<float>(y3) / max_y) - 0.5f,
+                    0.0
+                };
+                float interp{100};
+                for (float t = 0.0;
+                     t < 1.0 + std::numeric_limits<float>::epsilon();
+                     t += (1.0 / interp)) {
+                    vertex_positions.push_back(
+                        (1.0f - t) * ((1.0f - t) * p1 + t * p2) +
+                        t * ((1.0f - t) * p2 + t * p3)
+                    );
+                }
             }
             ngi::gl::StaticBuffer test_b(vertex_positions, GL_ARRAY_BUFFER);
             ngi::gl::VertexArrayObject test_vao{};

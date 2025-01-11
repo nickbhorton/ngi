@@ -358,6 +358,15 @@ std::vector<Contour> get_contours(SimpleGlyph const& g)
             }
             if (i == c.size() - 2) {
                 new_contour.push_back(snd);
+                // if on curve
+                if (std::get<1>(snd)) {
+                    // add middle curve point at end
+                    int16_t x =
+                        (std::get<0>(snd)[0] + std::get<0>(c[0])[0]) / 2;
+                    int16_t y =
+                        (std::get<0>(snd)[1] + std::get<0>(c[0])[1]) / 2;
+                    new_contour.push_back({{x, y}, false});
+                }
             }
         }
         c = new_contour;
