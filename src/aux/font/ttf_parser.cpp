@@ -322,7 +322,7 @@ std::variant<SimpleGlyph, int> read_glyph(
     if (gc.number_of_contours > 0) {
         return read_simple_glyph(font_file, std::move(gc), loca_table, index);
     } else {
-        std::cout << " multi-glyph not implemented\n";
+        // std::cout << " multi-glyph not implemented\n";
         return 0;
     }
     return 0;
@@ -387,7 +387,7 @@ std::vector<SimpleGlyph> get_simple_glyphs(std::string const& font_filename)
     };
 
     std::vector<SimpleGlyph> simple_glyphs{};
-    for (auto k = 0; k < 1 /*loca_table.offsets.size() - 1*/; k++) {
+    for (auto k = 0; k < loca_table.offsets.size() - 1; k++) {
         auto glyph{read_glyph(font_file, table_directory, loca_table, k)};
         if (std::holds_alternative<SimpleGlyph>(glyph)) {
             simple_glyphs.push_back(std::move(std::get<SimpleGlyph>(glyph)));

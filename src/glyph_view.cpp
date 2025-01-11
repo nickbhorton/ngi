@@ -19,15 +19,20 @@ key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
     }
 }
 
-int main()
+int main(int argc, char** argv)
 {
+    if (argc < 2) {
+        std::cout << "enter a glyph index\n";
+        std::exit(1);
+    }
     // try catch abstraction because throwing ensures destruction of all
     // objects. This is primarily important for the log class which outputs
     // somewhere on its destruction.
     try {
         std::string font_filename{"/usr/share/fonts/TTF/FiraCode-Regular.ttf"};
         auto glyphs{ngi::font::get_simple_glyphs(font_filename)};
-        auto empty_glyph = ngi::font::get_contours(glyphs[0]);
+        size_t glyph_index{atoi(argv[1]) % glyphs.size()};
+        auto empty_glyph = ngi::font::get_contours(glyphs[glyph_index]);
 
         ngi::glfw::Wrapper wrap{};
         ngi::glfw::Window window{wrap.generate_window(640, 480, key_callback)};
@@ -37,12 +42,12 @@ int main()
              {"../res/default_shaders/basic.frag.glsl", GL_FRAGMENT_SHADER}}
         );
 
-        float max_x{
-            2.0f * static_cast<float>(glyphs[0].gc.x_max - glyphs[0].gc.x_min)
-        };
-        float max_y{
-            2.0f * static_cast<float>(glyphs[0].gc.y_max - glyphs[0].gc.y_min)
-        };
+        float max_x{static_cast<float>(
+            glyphs[0].gc.x_max - glyphs[glyph_index].gc.x_min
+        )};
+        float max_y{static_cast<float>(
+            glyphs[0].gc.y_max - glyphs[glyph_index].gc.y_min
+        )};
         std::vector<ngi::gl::VertexArrayObject> vaos{};
         std::vector<ngi::gl::StaticBuffer<aa::vec3>> buffers{};
         std::cout << "contour count: " << empty_glyph.size() << "\n";
@@ -51,8 +56,8 @@ int main()
             for (size_t i = 0; i < c.size(); i++) {
                 auto const& [x, y] = std::get<0>(c.at(i));
                 vertex_positions.push_back(
-                    {static_cast<float>(x) / max_x,
-                     static_cast<float>(y) / max_y,
+                    {(static_cast<float>(x) / max_x) - 0.5f,
+                     (static_cast<float>(y) / max_y) - 0.5f,
                      0.0}
                 );
             }

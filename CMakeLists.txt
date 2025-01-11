@@ -16,14 +16,14 @@ add_subdirectory(src/aux)
 add_subdirectory(src/aux/font)
 
 # main executable
-add_executable(red_triangle)
+add_executable(glyph_view)
 
-target_sources(red_triangle PRIVATE src/red_triangle.cpp src/gl/buffer.h src/gl/shader.h
+target_sources(glyph_view PRIVATE src/glyph_view.cpp src/gl/buffer.h src/gl/shader.h
     src/gl/shader_object.cpp src/gl/shader_program.cpp src/gl/vao.cpp) 
 
-target_include_directories(red_triangle PRIVATE SYSTEM deps)
+target_include_directories(glyph_view PRIVATE SYSTEM deps)
 
-target_include_directories(red_triangle PRIVATE src arrayalgebra)
+target_include_directories(glyph_view PRIVATE src arrayalgebra)
 
-target_link_libraries(red_triangle PRIVATE ngi_aux ngi_ttf glfw OpenGL::GL)
+target_link_libraries(glyph_view PRIVATE ngi_aux ngi_ttf glfw OpenGL::GL)
 
