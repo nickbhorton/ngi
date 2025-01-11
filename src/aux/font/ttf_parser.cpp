@@ -127,6 +127,8 @@ int main()
                     cmap_format4.length = read_type<uint16_t>(font_file);
                     cmap_format4.language = read_type<uint16_t>(font_file);
                     cmap_format4.seg_count_x2 = read_type<uint16_t>(font_file);
+                    std::cout << "seg count: " << cmap_format4.seg_count_x2 / 2
+                              << "\n";
                     cmap_format4.search_range = read_type<uint16_t>(font_file);
                     cmap_format4.entry_selector =
                         read_type<uint16_t>(font_file);
@@ -237,6 +239,7 @@ int main()
 
     // LOCA
     LocaTable loca_table{};
+    std::cout << "loca long: " << head_table.index_to_loc_format << "\n";
     for (auto i = 0; i < table_directory.size(); i++) {
         if (std::string(table_directory[i].tag, 4) == "loca") {
             font_file.seekg(table_directory[i].offset, std::ios::beg);
@@ -257,24 +260,23 @@ int main()
     // GLYF
     for (auto i = 0; i < table_directory.size(); i++) {
         if (std::string(table_directory[i].tag, 4) == "glyf") {
-            for (uint32_t k = 'A'; k < 'B'; k++) {
-                std::cout << (char)k << ": ";
-                GlyphCommon gc{};
-                auto glyph_offset =
-                    loca_table.offsets[cmap_format4s[0].get_glyph_index(k)];
+            for (auto k = 0; k < loca_table.offsets.size() - 1; k++) {
                 font_file.seekg(
-                    table_directory[i].offset + glyph_offset,
+                    table_directory[i].offset + loca_table.offsets[k],
                     std::ios::beg
                 );
+                GlyphCommon gc{};
                 gc.number_of_contours = read_type<int16_t>(font_file);
                 gc.x_min = read_type<FWord>(font_file);
                 gc.y_min = read_type<FWord>(font_file);
                 gc.x_max = read_type<FWord>(font_file);
                 gc.y_max = read_type<FWord>(font_file);
-                std::cout << glyph_offset << "  " << gc.number_of_contours
-                          << " [" << gc.x_min << ", " << gc.x_max << "] ["
-                          << gc.y_min << ", " << gc.y_max << "]";
                 if (gc.number_of_contours > 0) {
+                    std::cout << "loca_table entry: " << loca_table.offsets[k]
+                              << "\n";
+                    std::cout << "\t" << gc.number_of_contours << " ["
+                              << gc.x_min << ", " << gc.x_max << "] ["
+                              << gc.y_min << ", " << gc.y_max << "]";
                     SimpleGlyph sg{};
                     sg.gc = gc;
                     size_t num_points{0};
@@ -304,59 +306,48 @@ int main()
                     std::cout << "} " << "num_points: " << num_points << " ";
 
                     sg.instruction_length = read_type<uint16_t>(font_file);
-                    std::cout << sg.instruction_length;
                     for (size_t n = 0; n < sg.instruction_length; n++) {
                         sg.instructions.push_back(read_type<uint8_t>(font_file)
                         );
                     }
                     std::cout << "\n";
                     for (size_t n = 0; n < num_points; n++) {
-                        sg.flags.push_back(read_type<uint8_t>(font_file));
+                        uint8_t flag = read_type<uint8_t>(font_file);
+                        sg.flags.push_back(flag);
                         if (sg.flags[n] & 0b1100'0000) {
                             std::cerr << "glyph flags have bits set when they "
                                          "are supposed to be zero\n";
                         }
                         uint8_t constexpr REPEAT{0b0000'1000};
                         if (sg.flags[n] & REPEAT) {
-                            std::cerr << "glyph flags REPEAT was set, this is "
-                                         "not implemented\n";
+                            uint8_t repeat_count =
+                                read_type<uint8_t>(font_file);
+                            /*
+                            std::cout << "repeat count: " << (int)repeat_count
+                                      << "\n";
+                                      */
+                            for (size_t r = 0; r < repeat_count; r++) {
+                                sg.flags.push_back(flag);
+                                n++;
+                            }
                         }
                     }
                     int16_t x_coord_val{0};
                     for (size_t n = 0; n < sg.flags.size(); n++) {
-                        // std::cout << std::bitset<8>(sg.flags[n]) << "\n";
                         uint8_t constexpr X_SHORT{0b0000'0010};
                         uint8_t constexpr X_SAME{0b0001'0000};
                         if (sg.flags[n] & X_SHORT) {
                             int16_t diff = static_cast<int16_t>(
                                 read_type<uint8_t>(font_file)
                             );
-                            if (sg.flags[n] & X_SAME) {
-                                x_coord_val += diff;
-                            } else {
-                                x_coord_val -= diff;
-                            }
-                            sg.x_coords.push_back(x_coord_val);
-                            std::cout << "1 " << diff << " "
-                                      << sg.x_coords[sg.x_coords.size() - 1]
-                                      << "\n";
-                        } else if (sg.flags[n] & X_SAME) {
-                            // this is not tested to work
-                            std::cout << "X_SAME\n";
-                            sg.x_coords.push_back(
-                                sg.x_coords[sg.x_coords.size() - 1]
-                            );
-                        } else {
+                            x_coord_val +=
+                                (sg.flags[n] & X_SAME) ? diff : -diff;
+                        } else if (!(sg.flags[n] & X_SAME)) {
                             int16_t diff = read_type<int16_t>(font_file);
                             x_coord_val += diff;
-                            sg.x_coords.push_back(x_coord_val);
-                            std::cout << "2 " << diff << " "
-                                      << sg.x_coords[sg.x_coords.size() - 1]
-                                      << "\n";
                         }
+                        sg.x_coords.push_back(x_coord_val);
                     }
-
-                    std::cout << "\n";
 
                     int16_t y_coord_val{0};
                     for (size_t n = 0; n < sg.flags.size(); n++) {
@@ -366,39 +357,25 @@ int main()
                             int16_t diff = static_cast<int16_t>(
                                 read_type<uint8_t>(font_file)
                             );
-                            if (sg.flags[n] & Y_SAME) {
-                                y_coord_val += diff;
-                            } else {
-                                y_coord_val -= diff;
-                            }
-                            sg.y_coords.push_back(y_coord_val);
-                            std::cout << "1 " << diff << " "
-                                      << sg.y_coords[sg.y_coords.size() - 1]
-                                      << "\n";
-                        } else if (sg.flags[n] & Y_SAME) {
-                            // this is not tested to work
-                            sg.y_coords.push_back(
-                                sg.y_coords[sg.y_coords.size() - 1]
-                            );
-                        } else {
+                            y_coord_val +=
+                                (sg.flags[n] & Y_SAME) ? diff : -diff;
+                        } else if (!(sg.flags[n] & Y_SAME)) {
                             int16_t diff = read_type<int16_t>(font_file);
                             y_coord_val += diff;
-                            sg.y_coords.push_back(y_coord_val);
-                            std::cout << "2 " << diff << " "
-                                      << sg.y_coords[sg.y_coords.size() - 1]
-                                      << "\n";
                         }
+                        sg.y_coords.push_back(y_coord_val);
                     }
 
+                    /*
                     std::cout << "x count: " << sg.x_coords.size() << "\n";
                     std::cout << "y count: " << sg.y_coords.size() << "\n\n";
-                    for (size_t n = 1; n < sg.x_coords.size(); n++) {
-                        std::cout << sg.x_coords[n] << "\n";
-                    }
-                    std::cout << "\n";
-                    for (size_t n = 1; n < sg.y_coords.size(); n++) {
+                    for (size_t n = 0; n < sg.x_coords.size(); n++) {
+                        std::cout << sg.x_coords[n] << "\t";
                         std::cout << sg.y_coords[n] << "\n";
                     }
+                    */
+                } else {
+                    std::cout << " multi-glyph not implemented\n";
                 }
             }
         }
@@ -411,9 +388,21 @@ uint32_t CmapSubtableFormat4::get_glyph_index(uint16_t unicode_value)
         return 0;
     }
     for (size_t i = 0; i < end_code.size(); i++) {
-        if (unicode_value <= end_code[i]) {
-            if (unicode_value >= start_code[i]) {
-                return id_delta[i] + id_range_offset[i] + unicode_value;
+        if (end_code[i] >= unicode_value) {
+            if (start_code[i] <= unicode_value) {
+                std::cout << "i: " << i << "\n";
+                std::cout << "start_code: " << start_code[i] << "\n";
+                std::cout << "end_code: " << end_code[i] << "\n";
+                std::cout << "id_delta: " << id_delta[i] << "\n";
+                std::cout << "id_range_offset / 2: " << id_range_offset[i] / 2
+                          << "\n";
+                uint32_t glyph_index =
+                    (id_range_offset[i] / 2 - id_range_offset.size()) +
+                    (unicode_value - start_code[i]);
+                std::cout << "glyph_index_array_index: " << glyph_index << "\n";
+                std::cout << "glyph index: " << glyph_index_array[glyph_index]
+                          << "\n";
+                return glyph_index_array[glyph_index];
             } else {
                 return 0;
             }
