@@ -220,7 +220,82 @@ LocaTable read_loca_table(
     return loca_table;
 }
 
-std::variant<SimpleGlyph> read_glyph(
+void read_coords(std::ifstream& font_file, SimpleGlyph& sg, bool is_x)
+{
+    uint8_t SHORT{static_cast<uint8_t>((is_x ? 0b0000'0010 : 0b0000'0100))};
+    uint8_t SAME{static_cast<uint8_t>((is_x ? 0b0001'0000 : 0b0010'0000))};
+    int16_t coord{0};
+    for (size_t n = 0; n < sg.flags.size(); n++) {
+        if (sg.flags[n] & SHORT) {
+            int16_t diff = static_cast<int16_t>(read_type<uint8_t>(font_file));
+            coord += (sg.flags[n] & SAME) ? diff : -diff;
+        } else if (!(sg.flags[n] & SAME)) {
+            int16_t diff = read_type<int16_t>(font_file);
+            coord += diff;
+        }
+        if (is_x) {
+            sg.x_coords.push_back(coord);
+        } else {
+            sg.y_coords.push_back(coord);
+        }
+    }
+}
+
+SimpleGlyph read_simple_glyph(
+    std::ifstream& font_file,
+    GlyphCommon&& gc,
+    LocaTable const& loca_table,
+    size_t index
+)
+{
+    SimpleGlyph sg{};
+    sg.gc = std::move(gc);
+    size_t num_points{0};
+    for (size_t n = 0; n < static_cast<size_t>(sg.gc.number_of_contours); n++) {
+        uint16_t end_contour_index = read_type<uint16_t>(font_file);
+        num_points =
+            std::max(static_cast<size_t>(end_contour_index + 1), num_points);
+        sg.end_points_of_contours.push_back(end_contour_index);
+    }
+
+    /*
+    std::cout << " {";
+    for (size_t n = 0; n < static_cast<size_t>(sg.gc.number_of_contours); n++) {
+        std::cout << sg.end_points_of_contours[n]
+                  << (n != static_cast<size_t>(sg.gc.number_of_contours) - 1
+                          ? ", "
+                          : "");
+    }
+    std::cout << "} " << "num_points: " << num_points << " ";
+    */
+
+    sg.instruction_length = read_type<uint16_t>(font_file);
+    for (size_t n = 0; n < sg.instruction_length; n++) {
+        sg.instructions.push_back(read_type<uint8_t>(font_file));
+    }
+    // std::cout << "\n";
+    for (size_t n = 0; n < num_points; n++) {
+        uint8_t flag = read_type<uint8_t>(font_file);
+        sg.flags.push_back(flag);
+        if (sg.flags[n] & 0b1100'0000) {
+            std::cerr << "glyph flags have bits set when they "
+                         "are supposed to be zero\n";
+        }
+        uint8_t constexpr REPEAT{0b0000'1000};
+        if (sg.flags[n] & REPEAT) {
+            uint8_t repeat_count = read_type<uint8_t>(font_file);
+            for (size_t r = 0; r < repeat_count; r++) {
+                sg.flags.push_back(flag);
+                n++;
+            }
+        }
+    }
+    read_coords(font_file, sg, true);
+    read_coords(font_file, sg, false);
+    return sg;
+}
+
+std::variant<SimpleGlyph, int> read_glyph(
     std::ifstream& font_file,
     std::map<std::string, TableDirectoryEntry> const& table_directory,
     LocaTable const& loca_table,
@@ -238,143 +313,12 @@ std::variant<SimpleGlyph> read_glyph(
     gc.x_max = read_type<FWord>(font_file);
     gc.y_max = read_type<FWord>(font_file);
     if (gc.number_of_contours > 0) {
-        std::cout << "loca_table entry: " << loca_table.offsets[index]
-                  << " countour count: " << gc.number_of_contours;
-        SimpleGlyph sg{};
-        sg.gc = std::move(gc);
-        size_t num_points{0};
-        for (size_t n = 0; n < static_cast<size_t>(sg.gc.number_of_contours);
-             n++) {
-            uint16_t end_contour_index = read_type<uint16_t>(font_file);
-            num_points = std::max(
-                static_cast<size_t>(end_contour_index + 1),
-                num_points
-            );
-            sg.end_points_of_contours.push_back(end_contour_index);
-        }
-
-        std::cout << " {";
-        for (size_t n = 0; n < static_cast<size_t>(sg.gc.number_of_contours);
-             n++) {
-            std::cout << sg.end_points_of_contours[n]
-                      << (n != static_cast<size_t>(sg.gc.number_of_contours) - 1
-                              ? ", "
-                              : "");
-        }
-        std::cout << "} " << "num_points: " << num_points << " ";
-
-        sg.instruction_length = read_type<uint16_t>(font_file);
-        for (size_t n = 0; n < sg.instruction_length; n++) {
-            sg.instructions.push_back(read_type<uint8_t>(font_file));
-        }
-        std::cout << "\n";
-        for (size_t n = 0; n < num_points; n++) {
-            uint8_t flag = read_type<uint8_t>(font_file);
-            sg.flags.push_back(flag);
-            if (sg.flags[n] & 0b1100'0000) {
-                std::cerr << "glyph flags have bits set when they "
-                             "are supposed to be zero\n";
-            }
-            uint8_t constexpr REPEAT{0b0000'1000};
-            if (sg.flags[n] & REPEAT) {
-                uint8_t repeat_count = read_type<uint8_t>(font_file);
-                for (size_t r = 0; r < repeat_count; r++) {
-                    sg.flags.push_back(flag);
-                    n++;
-                }
-            }
-        }
-        int16_t x_coord_val{0};
-        for (size_t n = 0; n < sg.flags.size(); n++) {
-            uint8_t constexpr X_SHORT{0b0000'0010};
-            uint8_t constexpr X_SAME{0b0001'0000};
-            if (sg.flags[n] & X_SHORT) {
-                int16_t diff =
-                    static_cast<int16_t>(read_type<uint8_t>(font_file));
-                x_coord_val += (sg.flags[n] & X_SAME) ? diff : -diff;
-            } else if (!(sg.flags[n] & X_SAME)) {
-                int16_t diff = read_type<int16_t>(font_file);
-                x_coord_val += diff;
-            }
-            sg.x_coords.push_back(x_coord_val);
-        }
-
-        int16_t y_coord_val{0};
-        for (size_t n = 0; n < sg.flags.size(); n++) {
-            uint8_t constexpr Y_SHORT{0b0000'0100};
-            uint8_t constexpr Y_SAME{0b0010'0000};
-            if (sg.flags[n] & Y_SHORT) {
-                int16_t diff =
-                    static_cast<int16_t>(read_type<uint8_t>(font_file));
-                y_coord_val += (sg.flags[n] & Y_SAME) ? diff : -diff;
-            } else if (!(sg.flags[n] & Y_SAME)) {
-                int16_t diff = read_type<int16_t>(font_file);
-                y_coord_val += diff;
-            }
-            sg.y_coords.push_back(y_coord_val);
-        }
-
-        std::vector<BezierCurve> curves{};
-        BezierCurve curve{};
-        bool prev_on_curve{false};
-        size_t curve_index = 0;
-        for (size_t n = 0; n < sg.x_coords.size(); n++) {
-            bool curr_on_curve{(sg.flags[n] & 1) > 0};
-            std::array<int16_t, 2> pt{sg.x_coords[n], sg.y_coords[n]};
-            std::cout << (curr_on_curve ? "X " : "  ") << pt[0] << " " << pt[1]
-                      << "\n";
-            if (n == sg.end_points_of_contours[0] + 1) {
-                break;
-            }
-            if (curve_index == 0) {
-                if (curr_on_curve) {
-                    curve.curve[curve_index] = pt;
-                } else {
-                    std::cerr << "first curve index cannot be "
-                                 "off_curve\n";
-                }
-            } else if (curve_index == 1) {
-                if (prev_on_curve && !curr_on_curve) {
-                    curve.curve[curve_index] = pt;
-                } else if (prev_on_curve && curr_on_curve) {
-                    int16_t middle_x = (pt[0] + curve.curve[0][0]) / 2;
-                    int16_t middle_y = (pt[1] + curve.curve[0][1]) / 2;
-                    curve.curve[1] = {middle_x, middle_y};
-                    curve.curve[2] = pt;
-                    curves.push_back(curve);
-
-                    prev_on_curve = false;
-                    curve_index = 0;
-                    continue;
-                } else {
-                    std::cerr << "middle bezier point has to be "
-                                 "off curve\n";
-                }
-            } else if (curve_index == 2) {
-                if (curr_on_curve && !prev_on_curve) {
-
-                    curve.curve[2] = pt;
-                    curve_index = 0;
-                    curves.push_back(curve);
-                    prev_on_curve = false;
-                    continue;
-                }
-            }
-            prev_on_curve = curr_on_curve;
-            curve_index++;
-        }
-        std::cout << "\n";
-        for (auto const& c : curves) {
-            for (auto ci = 0; ci < 3; ci++) {
-                std::cout << c.curve[ci][0] << "\t" << c.curve[ci][1] << "\n";
-            }
-        }
-        return sg;
+        return read_simple_glyph(font_file, std::move(gc), loca_table, index);
     } else {
         std::cout << " multi-glyph not implemented\n";
-        return {};
+        return 0;
     }
-    return {};
+    return 0;
 }
 
 int main()
@@ -402,13 +346,14 @@ int main()
     std::cout << "glyph count: " << maxp_table.number_glyphs << "\n";
 
     std::vector<SimpleGlyph> simple_glyphs{};
-    for (auto k = 0; k < loca_table.offsets.size() - 1; k++) {
+    for (auto k = 0; k < 1 /*loca_table.offsets.size() - 1*/; k++) {
         auto glyph{read_glyph(font_file, table_directory, loca_table, k)};
         if (std::holds_alternative<SimpleGlyph>(glyph)) {
             simple_glyphs.push_back(std::move(std::get<SimpleGlyph>(glyph)));
         }
     }
-    std::cout << simple_glyphs.size() << "\n";
+    for (auto const& g : simple_glyphs) {
+    }
 }
 
 uint32_t CmapSubtableFormat4::get_glyph_index(uint16_t unicode_value)
