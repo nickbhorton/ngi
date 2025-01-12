@@ -5,14 +5,11 @@
 #include <cmath>
 #include <limits>
 
-aa::dvec2 bezier2(ngi::font::BezierCurve const& b, double t)
-{
-    return b[0] + 2.0 * t * (b[1] - b[0]) + t * t * (b[2] - 2.0 * b[1] + b[0]);
-}
+using namespace ngi::font;
 
 // taken from cubic equation calculator
 std::array<std::array<double, 2>, 3>
-cubic_solve(double a, double b, double c, double d)
+solve_cubic(double a, double b, double c, double d)
 {
     std::array<std::array<double, 2>, 3> result{};
     if (a == 0.0) {
@@ -72,7 +69,78 @@ cubic_solve(double a, double b, double c, double d)
     result[1][0] = -term1 + r13 * std::cos((dum1 + 2.0 * M_PI) / 3.0);
     result[2][0] = -term1 + r13 * std::cos((dum1 + 4.0 * M_PI) / 3.0);
     return result;
-} // End of cubicSolve
+}
+
+aa::dvec2 bezier2_evaluate(BezierCurve2 const& b, double t)
+{
+    return b[0] + 2.0 * t * (b[1] - b[0]) + t * t * (b[2] - 2.0 * b[1] + b[0]);
+}
+
+double bezier2_min_dist(BezierCurve2 const& b, aa::dvec2 P)
+{
+    aa::dvec2 p{P - b[0]};
+    aa::dvec2 p1{b[1] - b[0]};
+    aa::dvec2 p2{b[2] - 2.0 * b[1] + b[0]};
+    double a{aa::dot(p2, p2)};
+    double B{3.0 * aa::dot(p1, p2)};
+    double c{2.0 * aa::dot(p1, p1) - aa::dot(p2, p)};
+    double d{-aa::dot(p1, p)};
+    auto rs = solve_cubic(a, B, c, d);
+    std::vector<double> valid_ts = {0.0, 1.0};
+    for (auto const& r : rs) {
+        if (r[1] == 0.0 && r[0] > 0.0 && r[0] < 1.0) {
+            valid_ts.push_back(r[0]);
+        }
+    }
+    double min_dist{std::numeric_limits<double>::max()};
+    double min_t = -1.0;
+
+    for (auto const& t : valid_ts) {
+        double dist{aa::magnitude(bezier2_evaluate(b, t) - P)};
+        // std::cout << dist << " ";
+        if (dist < min_dist) {
+            min_dist = dist;
+            min_t = t;
+        }
+    }
+    if (min_dist == std::numeric_limits<double>::max()) {
+        std::cout << "min dist was double max indicating that no distance was "
+                     "found\n";
+    }
+    return min_dist;
+}
+
+aa::dvec2 bezier1_evaluate(BezierCurve1 const& b, double t)
+{
+    return (1.0 - t) * b[0] + t * b[1];
+}
+
+double bezier1_min_dist(BezierCurve1 const& b, aa::dvec2 P)
+{
+    aa::dvec2 const& p0{b[0]};
+    aa::dvec2 const& p1{b[1]};
+    double r = (aa::dot(P - p0, p1 - p0)) / (aa::dot(p1 - p0, p1 - p0));
+    std::vector<double> valid_ts = {0.0, 1.0};
+    if (r >= 0.0 && r <= 1.0) {
+        valid_ts.push_back(r);
+    }
+    double min_dist{std::numeric_limits<double>::max()};
+    double min_t = -1.0;
+
+    for (auto const& t : valid_ts) {
+        double dist{aa::magnitude(bezier1_evaluate(b, t) - P)};
+        // std::cout << dist << " ";
+        if (dist < min_dist) {
+            min_dist = dist;
+            min_t = t;
+        }
+    }
+    if (min_dist == std::numeric_limits<double>::max()) {
+        std::cout << "min dist was double max indicating that no distance was "
+                     "found\n";
+    }
+    return min_dist;
+}
 
 int main(int argc, char** argv)
 {
@@ -81,19 +149,15 @@ int main(int argc, char** argv)
         std::exit(1);
     }
 
-    // try catch abstraction because throwing ensures destruction of all
-    // objects. This is primarily important for the log class which outputs
-    // somewhere on its destruction.
     try {
-        /*
         std::string font_filename{"/usr/share/fonts/TTF/FiraCode-Regular.ttf"};
-        auto glyphs{ngi::font::get_simple_glyphs(font_filename)};
+        auto glyphs{get_simple_glyphs(font_filename)};
         size_t glyph_index{atoi(argv[1]) % glyphs.size()};
 
         std::cout << "contour count: "
                   << glyphs[glyph_index].gc.number_of_contours << "\n";
 
-        auto glyph_contours = ngi::font::get_contours(glyphs[glyph_index]);
+        auto glyph_contours = get_contours(glyphs[glyph_index]);
 
         std::cout << "point count: " << glyph_contours[0].size() << "\n";
 
@@ -102,14 +166,18 @@ int main(int argc, char** argv)
         double y_min{static_cast<double>(glyphs[glyph_index].gc.y_min)};
         double y_max{static_cast<double>(glyphs[glyph_index].gc.y_max)};
 
-        std::vector<ngi::font::BezierCurve> beziers{};
+        std::vector<BezierCurve2> beziers2{};
+        std::vector<BezierCurve1> beziers1{};
 
-        */
-        double space_max{1.0};
-        /*
+        if (glyph_contours.size() > 1) {
+            std::cerr << "glyphs with more than 1 contour are not implemented\n";
+            std::exit(1);
+        }
+
+        double glyph_scale{0.5};
+        double glyph_shift{0.25};
 
         for (auto i = 0; i < glyph_contours.size(); i++) {
-            std::vector<aa::vec3> vertex_positions{};
             for (size_t j = 0; j < glyph_contours[i].size(); j += 2) {
                 auto const& [x1, y1] = std::get<0>(glyph_contours[i].at(j));
                 auto const& [x2, y2] = std::get<0>(
@@ -119,39 +187,53 @@ int main(int argc, char** argv)
                     glyph_contours[i].at((j + 2) % glyph_contours[i].size())
                 );
                 aa::dvec2 p0{
-                    space_max *
-                        ((static_cast<double>(x1) - x_min) / (x_max - x_min)),
-                    space_max *
-                        ((static_cast<double>(y1) - y_min) / (y_max - y_min))
+                    glyph_scale * ((static_cast<double>(x1) - x_min) /
+                                   (x_max - x_min)) +
+                        glyph_shift,
+                    glyph_scale * ((static_cast<double>(y1) - y_min) /
+                                   (y_max - y_min)) +
+                        glyph_shift
                 };
                 aa::dvec2 p1{
-                    space_max *
-                        ((static_cast<double>(x2) - x_min) / (x_max - x_min)),
-                    space_max *
-                        ((static_cast<double>(y2) - y_min) / (y_max - y_min))
+                    glyph_scale * ((static_cast<double>(x2) - x_min) /
+                                   (x_max - x_min)) +
+                        glyph_shift,
+                    glyph_scale * ((static_cast<double>(y2) - y_min) /
+                                   (y_max - y_min)) +
+                        glyph_shift
                 };
                 aa::dvec2 p2{
-                    space_max *
-                        ((static_cast<double>(x3) - x_min) / (x_max - x_min)),
-                    space_max *
-                        ((static_cast<double>(y3) - y_min) / (y_max - y_min))
+                    glyph_scale * ((static_cast<double>(x3) - x_min) /
+                                   (x_max - x_min)) +
+                        glyph_shift,
+                    glyph_scale * ((static_cast<double>(y3) - y_min) /
+                                   (y_max - y_min)) +
+                        glyph_shift
                 };
-                beziers.push_back({p0, p1, p2});
+                aa::dvec2 pm{0.5 * (p0 + p2)};
+                double epsilon_mult{2.0};
+                bool eq0{
+                    std::abs(pm[0] - p1[0]) <
+                    std::numeric_limits<double>::epsilon() * epsilon_mult
+                };
+                bool eq1{
+                    std::abs(pm[1] - p1[1]) <
+                    std::numeric_limits<double>::epsilon() * epsilon_mult
+                };
+                if (eq0 && eq1) {
+                    beziers1.push_back({p0, p2});
+                } else {
+                    beziers2.push_back({p0, p1, p2});
+                }
             }
         }
-        std::cout << "bezier count: " << beziers.size() << "\n";
-        */
+        // std::cout << "bezier2 count: " << beziers2.size() << "\n";
+        // std::cout << "bezier1 count: " << beziers1.size() << "\n";
 
-        // auto const& bezier{beziers[0]};
-        ngi::font::BezierCurve bezier{};
-        bezier[0] = {0.25, 0.5};
-        bezier[1] = {0.5, 0.5};
-        bezier[2] = {0.5, 0.25};
-
-        size_t constexpr x_discr{128};
-        size_t constexpr y_discr{128};
-        double x_half{space_max / (2.0 * static_cast<double>(x_discr))};
-        double y_half{space_max / (2.0 * static_cast<double>(y_discr))};
+        size_t constexpr x_discr{64};
+        size_t constexpr y_discr{64};
+        double x_half{1.0 / (2.0 * static_cast<double>(x_discr))};
+        double y_half{1.0 / (2.0 * static_cast<double>(y_discr))};
         Image<x_discr, y_discr> img{};
         for (size_t y = 0; y < y_discr; y++) {
             for (size_t x = 0; x < x_discr; x++) {
@@ -163,43 +245,28 @@ int main(int argc, char** argv)
                 };
 
                 aa::dvec2 P{xl + x_half, yl + y_half};
-                // std::cout << P << "  ";
-                aa::dvec2 p{P - bezier[0]};
-                aa::dvec2 p1{bezier[1] - bezier[0]};
-                aa::dvec2 p2{bezier[2] - 2.0 * bezier[1] + bezier[0]};
-                double a{aa::dot(p2, p2)};
-                double b{3.0 * aa::dot(p1, p2)};
-                double c{2.0 * aa::dot(p1, p1) - aa::dot(p2, p)};
-                double d{-aa::dot(p1, p)};
-                auto rs = cubic_solve(a, b, c, d);
-                std::vector<double> valid_ts = {0.0, 1.0};
-                for (auto const& r : rs) {
-                    if (r[1] == 0.0 && r[0] > 0.0 && r[0] < 1.0) {
-                        valid_ts.push_back(r[0]);
-                    }
-                }
                 double min_dist{std::numeric_limits<double>::max()};
-                double min_t = -1.0;
-
-                /*
-                std::cout << "[";
-                for (auto const& t : valid_ts) {
-                    std::cout << t << " ";
-                }
-                std::cout << "] ";
-                */
-                for (auto const& t : valid_ts) {
-                    double dist{aa::magnitude(bezier2(bezier, t) - P)};
-                    // std::cout << dist << " ";
+                for (auto const& bezier2 : beziers2) {
+                    double dist{bezier2_min_dist(bezier2, P)};
                     if (dist < min_dist) {
                         min_dist = dist;
-                        min_t = t;
+                    }
+                }
+                for (auto const& bezier1 : beziers1) {
+                    double dist{bezier1_min_dist(bezier1, P)};
+                    if (dist < min_dist) {
+                        min_dist = dist;
                     }
                 }
 
-                if (min_dist > 0.1) {
-                    img.ref(y, x) = ftou8({1.0, 1.0, 1.0, 1.0});
-                }
+                size_t hi = size_t(int(y_discr) - int(y) - 1);
+                size_t wi = x;
+                img.ref(hi, wi) = ftou8(
+                    {static_cast<float>(min_dist),
+                     static_cast<float>(min_dist),
+                     static_cast<float>(min_dist),
+                     1.0}
+                );
                 // std::cout << min_t << ":" << min_dist << "\n";
             }
             img.save("test.png");
