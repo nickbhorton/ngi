@@ -4,8 +4,14 @@
 #include "aux/png/image.h"
 #include <cmath>
 #include <limits>
+#include <variant>
 
 using namespace ngi::font;
+
+bool double_eq(double a, double b, float mult)
+{
+    return std::abs(a - b) < std::numeric_limits<double>::epsilon() * mult;
+}
 
 // taken from cubic equation calculator
 std::array<std::array<double, 2>, 3>
@@ -76,7 +82,12 @@ aa::dvec2 bezier2_evaluate(BezierCurve2 const& b, double t)
     return b[0] + 2.0 * t * (b[1] - b[0]) + t * t * (b[2] - 2.0 * b[1] + b[0]);
 }
 
-double bezier2_min_dist(BezierCurve2 const& b, aa::dvec2 P)
+aa::dvec2 bezier2_derivitive(BezierCurve2 const& b, double t)
+{
+    return 2.0 * t * (b[2] - 2.0 * b[1] + b[0]) + 2.0 * (b[1] - b[0]);
+}
+
+std::tuple<double, double> bezier2_min_dist(BezierCurve2 const& b, aa::dvec2 P)
 {
     aa::dvec2 p{P - b[0]};
     aa::dvec2 p1{b[1] - b[0]};
@@ -107,7 +118,7 @@ double bezier2_min_dist(BezierCurve2 const& b, aa::dvec2 P)
         std::cout << "min dist was double max indicating that no distance was "
                      "found\n";
     }
-    return min_dist;
+    return {min_dist, min_t};
 }
 
 aa::dvec2 bezier1_evaluate(BezierCurve1 const& b, double t)
@@ -115,7 +126,12 @@ aa::dvec2 bezier1_evaluate(BezierCurve1 const& b, double t)
     return (1.0 - t) * b[0] + t * b[1];
 }
 
-double bezier1_min_dist(BezierCurve1 const& b, aa::dvec2 P)
+aa::dvec2 bezier1_derivitive(BezierCurve1 const& b, double t)
+{
+    return b[1] - b[0];
+}
+
+std::tuple<double, double> bezier1_min_dist(BezierCurve1 const& b, aa::dvec2 P)
 {
     aa::dvec2 const& p0{b[0]};
     aa::dvec2 const& p1{b[1]};
@@ -139,7 +155,7 @@ double bezier1_min_dist(BezierCurve1 const& b, aa::dvec2 P)
         std::cout << "min dist was double max indicating that no distance was "
                      "found\n";
     }
-    return min_dist;
+    return {min_dist, min_t};
 }
 
 int main(int argc, char** argv)
@@ -170,7 +186,8 @@ int main(int argc, char** argv)
         std::vector<BezierCurve1> beziers1{};
 
         if (glyph_contours.size() > 1) {
-            std::cerr << "glyphs with more than 1 contour are not implemented\n";
+            std::cerr
+                << "glyphs with more than 1 contour are not implemented\n";
             std::exit(1);
         }
 
@@ -230,8 +247,8 @@ int main(int argc, char** argv)
         // std::cout << "bezier2 count: " << beziers2.size() << "\n";
         // std::cout << "bezier1 count: " << beziers1.size() << "\n";
 
-        size_t constexpr x_discr{64};
-        size_t constexpr y_discr{64};
+        size_t constexpr x_discr{256};
+        size_t constexpr y_discr{256};
         double x_half{1.0 / (2.0 * static_cast<double>(x_discr))};
         double y_half{1.0 / (2.0 * static_cast<double>(y_discr))};
         Image<x_discr, y_discr> img{};
@@ -246,31 +263,83 @@ int main(int argc, char** argv)
 
                 aa::dvec2 P{xl + x_half, yl + y_half};
                 double min_dist{std::numeric_limits<double>::max()};
+                double min_t{};
+                std::variant<BezierCurve2, BezierCurve1> min_bezier{};
                 for (auto const& bezier2 : beziers2) {
-                    double dist{bezier2_min_dist(bezier2, P)};
-                    if (dist < min_dist) {
+                    auto const [dist, t] = bezier2_min_dist(bezier2, P);
+                    if (double_eq(dist, min_dist, 10)) {
+                        if (t < min_t) {
+                            min_dist = dist;
+                            min_t = t;
+                            min_bezier = bezier2;
+                        }
+                    } else if (dist < min_dist) {
                         min_dist = dist;
+                        min_t = t;
+                        min_bezier = bezier2;
                     }
                 }
                 for (auto const& bezier1 : beziers1) {
-                    double dist{bezier1_min_dist(bezier1, P)};
-                    if (dist < min_dist) {
+                    auto const [dist, t] = bezier1_min_dist(bezier1, P);
+                    if (double_eq(dist, min_dist, 10)) {
+                        if (t < min_t) {
+                            min_dist = dist;
+                            min_t = t;
+                            min_bezier = bezier1;
+                        }
+                    } else if (dist < min_dist) {
                         min_dist = dist;
+                        min_t = t;
+                        min_bezier = bezier1;
                     }
                 }
-
+                aa::dvec2 derivitive{};
+                aa::dvec2 dist{};
+                double signed_distance{};
+                if (std::holds_alternative<BezierCurve2>(min_bezier)) {
+                    derivitive = bezier2_derivitive(
+                        std::get<BezierCurve2>(min_bezier),
+                        min_t
+                    );
+                    dist = bezier2_evaluate(
+                               std::get<BezierCurve2>(min_bezier),
+                               min_t
+                           ) -
+                           P;
+                } else {
+                    derivitive = bezier1_derivitive(
+                        std::get<BezierCurve1>(min_bezier),
+                        min_t
+                    );
+                    dist = bezier1_evaluate(
+                               std::get<BezierCurve1>(min_bezier),
+                               min_t
+                           ) -
+                           P;
+                }
+                if (std::signbit(aa::cross(
+                        aa::dvec3{derivitive[0], derivitive[1], 0.0},
+                        aa::dvec3{dist[0], dist[1], 0.0}
+                    )[2])) {
+                    signed_distance = -min_dist;
+                } else {
+                    signed_distance = min_dist;
+                }
                 size_t hi = size_t(int(y_discr) - int(y) - 1);
                 size_t wi = x;
-                img.ref(hi, wi) = ftou8(
-                    {static_cast<float>(min_dist),
-                     static_cast<float>(min_dist),
-                     static_cast<float>(min_dist),
-                     1.0}
-                );
-                // std::cout << min_t << ":" << min_dist << "\n";
+                if (std::signbit(signed_distance)) {
+                    img.ref(hi, wi) = ftou8(
+                        {0.0,
+                         0.0,
+                         static_cast<float>(std::abs(signed_distance)),
+                         1.0}
+                    );
+                } else {
+                    img.ref(hi, wi) = ftou8({1.0, 0.0, 0.0, 1.0});
+                }
             }
-            img.save("test.png");
         }
+        img.save("test.png");
     } catch (int& e) {
         std::cout << "error throw: " << e << "\n";
     }
