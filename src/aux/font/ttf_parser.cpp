@@ -240,8 +240,18 @@ void read_coords(std::ifstream& font_file, SimpleGlyph& sg, bool is_x)
             coord += diff;
         }
         if (is_x) {
+            if (coord > sg.gc.x_max) {
+                sg.gc.x_max = coord;
+            } else if (coord < sg.gc.x_min) {
+                sg.gc.x_min = coord;
+            }
             sg.x_coords.push_back(coord);
         } else {
+            if (coord > sg.gc.y_max) {
+                sg.gc.y_max = coord;
+            } else if (coord < sg.gc.y_min) {
+                sg.gc.y_min = coord;
+            }
             sg.y_coords.push_back(coord);
         }
     }

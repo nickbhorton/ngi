@@ -15,7 +15,7 @@ add_subdirectory(deps)
 add_subdirectory(src/aux)
 add_subdirectory(src/aux/font)
 
-# main executable
+#
 add_executable(glyph_view)
 
 target_sources(glyph_view PRIVATE src/glyph_view.cpp src/gl/buffer.h src/gl/shader.h
@@ -26,4 +26,15 @@ target_include_directories(glyph_view PRIVATE SYSTEM deps)
 target_include_directories(glyph_view PRIVATE src arrayalgebra)
 
 target_link_libraries(glyph_view PRIVATE ngi_aux ngi_ttf glfw OpenGL::GL)
+
+#
+add_executable(glyph_sdf)
+
+target_sources(glyph_sdf PRIVATE src/glyph_sdf.cpp) 
+
+target_include_directories(glyph_sdf PRIVATE SYSTEM deps)
+
+target_include_directories(glyph_sdf PRIVATE src arrayalgebra)
+
+target_link_libraries(glyph_sdf PRIVATE ngi_ttf png)
 

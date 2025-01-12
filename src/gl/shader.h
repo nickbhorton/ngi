@@ -62,6 +62,10 @@ public:
         std::string const& uniform_name,
         aa::vec3 const& new_val
     );
+    void update_uniform_vec4f(
+        std::string const& uniform_name,
+        aa::vec4 const& new_val
+    );
 };
 
 } // namespace ngi::gl

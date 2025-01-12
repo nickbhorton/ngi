@@ -131,3 +131,13 @@ void ShaderProgram::update_uniform_vec3f(
     GLint location = glGetUniformLocation(name, uniform_name.c_str());
     glUniform3fv(location, 1, new_val.data());
 }
+
+void ShaderProgram::update_uniform_vec4f(
+    std::string const& uniform_name,
+    aa::vec4 const& new_val
+)
+{
+    this->bind();
+    GLint location = glGetUniformLocation(name, uniform_name.c_str());
+    glUniform4fv(location, 1, new_val.data());
+}

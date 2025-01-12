@@ -6,7 +6,8 @@
 
 namespace ngi::font
 {
+typedef std::array<std::array<double, 2>, 3> BezierCurve;
+
 typedef std::array<int16_t, 2> Point;
-typedef std::array<Point, 3> BezierCurve;
 typedef std::vector<std::tuple<Point, bool>> Contour;
-} // namespace ngi::aux::font
+} // namespace ngi::font
