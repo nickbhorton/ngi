@@ -13,149 +13,9 @@ bool double_eq(double a, double b, float mult)
     return std::abs(a - b) < std::numeric_limits<double>::epsilon() * mult;
 }
 
-// taken from cubic equation calculator
-std::array<std::array<double, 2>, 3>
-solve_cubic(double a, double b, double c, double d)
+bool dvec2_eq(aa::dvec2 a, aa::dvec2 b, float mult)
 {
-    std::array<std::array<double, 2>, 3> result{};
-    if (a == 0.0) {
-        std::cout
-            << "The coefficient of the cube of x is 0. Please use the utility "
-               "for a SECOND degree quadratic. No further action taken.";
-        return {};
-    }
-
-    if (d == 0.0) {
-        std::cout
-            << "One root is 0. Now divide through by x and use the utility for "
-               "a SECOND degree quadratic to solve the resulting equation for "
-               "the other two roots. No further action taken.";
-        return {};
-    }
-    b /= a;
-    c /= a;
-    d /= a;
-    double disc{}, q{}, r{}, dum1{}, s{}, t{}, term1{}, r13{};
-    q = (3.0 * c - (b * b)) / 9.0;
-    r = -(27.0 * d) + b * (9.0 * c - 2.0 * (b * b));
-    r /= 54.0;
-    disc = q * q * q + r * r;
-    result[0][1] = 0; // The first root is always real.
-    term1 = (b / 3.0);
-    if (!std::signbit(disc)) { // one root real, two are complex
-        s = r + std::sqrt(disc);
-        s = (std::signbit(s)) ? -std::pow(-s, (1.0 / 3.0))
-                              : std::pow(s, (1.0 / 3.0));
-        t = r - std::sqrt(disc);
-        t = (std::signbit(t)) ? -std::pow(-t, (1.0 / 3.0))
-                              : std::pow(t, (1.0 / 3.0));
-        result[0][0] = -term1 + s + t;
-        term1 += (s + t) / 2.0;
-        result[2][0] = result[1][0] = -term1;
-        term1 = std::sqrt(3.0) * (-t + s) / 2;
-        result[1][1] = term1;
-        result[2][1] = -term1;
-        return result;
-    }
-    // The remaining options are all real
-    result[2][1] = result[1][1] = 0;
-    if (disc == 0.0) { // All roots real, at least two are equal.
-        r13 = ((r < 0) ? -std::pow(-r, (1.0 / 3.0)) : std::pow(r, (1.0 / 3.0)));
-        result[0][0] = -term1 + 2.0 * r13;
-        result[2][0] = result[1][0] = -(r13 + term1);
-        return result;
-    } // End if (disc == 0)
-    // Only option left is that all roots are real and unequal (to get here, q <
-    // 0)
-    q = -q;
-    dum1 = q * q * q;
-    dum1 = std::acos(r / std::sqrt(dum1));
-    r13 = 2.0 * std::sqrt(q);
-    result[0][0] = -term1 + r13 * std::cos(dum1 / 3.0);
-    result[1][0] = -term1 + r13 * std::cos((dum1 + 2.0 * M_PI) / 3.0);
-    result[2][0] = -term1 + r13 * std::cos((dum1 + 4.0 * M_PI) / 3.0);
-    return result;
-}
-
-aa::dvec2 bezier2_evaluate(BezierCurve2 const& b, double t)
-{
-    return b[0] + 2.0 * t * (b[1] - b[0]) + t * t * (b[2] - 2.0 * b[1] + b[0]);
-}
-
-aa::dvec2 bezier2_derivitive(BezierCurve2 const& b, double t)
-{
-    return 2.0 * t * (b[2] - 2.0 * b[1] + b[0]) + 2.0 * (b[1] - b[0]);
-}
-
-std::tuple<double, double> bezier2_min_dist(BezierCurve2 const& b, aa::dvec2 P)
-{
-    aa::dvec2 p{P - b[0]};
-    aa::dvec2 p1{b[1] - b[0]};
-    aa::dvec2 p2{b[2] - 2.0 * b[1] + b[0]};
-    double a{aa::dot(p2, p2)};
-    double B{3.0 * aa::dot(p1, p2)};
-    double c{2.0 * aa::dot(p1, p1) - aa::dot(p2, p)};
-    double d{-aa::dot(p1, p)};
-    auto rs = solve_cubic(a, B, c, d);
-    std::vector<double> valid_ts = {0.0, 1.0};
-    for (auto const& r : rs) {
-        if (r[1] == 0.0 && r[0] > 0.0 && r[0] < 1.0) {
-            valid_ts.push_back(r[0]);
-        }
-    }
-    double min_dist{std::numeric_limits<double>::max()};
-    double min_t = -1.0;
-
-    for (auto const& t : valid_ts) {
-        double dist{aa::magnitude(bezier2_evaluate(b, t) - P)};
-        // std::cout << dist << " ";
-        if (dist < min_dist) {
-            min_dist = dist;
-            min_t = t;
-        }
-    }
-    if (min_dist == std::numeric_limits<double>::max()) {
-        std::cout << "min dist was double max indicating that no distance was "
-                     "found\n";
-    }
-    return {min_dist, min_t};
-}
-
-aa::dvec2 bezier1_evaluate(BezierCurve1 const& b, double t)
-{
-    return (1.0 - t) * b[0] + t * b[1];
-}
-
-aa::dvec2 bezier1_derivitive(BezierCurve1 const& b, double t)
-{
-    return b[1] - b[0];
-}
-
-std::tuple<double, double> bezier1_min_dist(BezierCurve1 const& b, aa::dvec2 P)
-{
-    aa::dvec2 const& p0{b[0]};
-    aa::dvec2 const& p1{b[1]};
-    double r = (aa::dot(P - p0, p1 - p0)) / (aa::dot(p1 - p0, p1 - p0));
-    std::vector<double> valid_ts = {0.0, 1.0};
-    if (r >= 0.0 && r <= 1.0) {
-        valid_ts.push_back(r);
-    }
-    double min_dist{std::numeric_limits<double>::max()};
-    double min_t = -1.0;
-
-    for (auto const& t : valid_ts) {
-        double dist{aa::magnitude(bezier1_evaluate(b, t) - P)};
-        // std::cout << dist << " ";
-        if (dist < min_dist) {
-            min_dist = dist;
-            min_t = t;
-        }
-    }
-    if (min_dist == std::numeric_limits<double>::max()) {
-        std::cout << "min dist was double max indicating that no distance was "
-                     "found\n";
-    }
-    return {min_dist, min_t};
+    return double_eq(a[0], b[0], mult) && double_eq(a[1], b[1], mult);
 }
 
 int main(int argc, char** argv)
@@ -182,8 +42,8 @@ int main(int argc, char** argv)
         double y_min{static_cast<double>(glyphs[glyph_index].gc.y_min)};
         double y_max{static_cast<double>(glyphs[glyph_index].gc.y_max)};
 
-        std::vector<BezierCurve2> beziers2{};
-        std::vector<BezierCurve1> beziers1{};
+        std::vector<QuadraticBezier> quads{};
+        std::vector<LinearBezier> lins{};
 
         if (glyph_contours.size() > 1) {
             std::cerr
@@ -228,24 +88,13 @@ int main(int argc, char** argv)
                         glyph_shift
                 };
                 aa::dvec2 pm{0.5 * (p0 + p2)};
-                double epsilon_mult{2.0};
-                bool eq0{
-                    std::abs(pm[0] - p1[0]) <
-                    std::numeric_limits<double>::epsilon() * epsilon_mult
-                };
-                bool eq1{
-                    std::abs(pm[1] - p1[1]) <
-                    std::numeric_limits<double>::epsilon() * epsilon_mult
-                };
-                if (eq0 && eq1) {
-                    beziers1.push_back({p0, p2});
+                if (dvec2_eq(pm, p1, 2.0)) {
+                    lins.push_back(LinearBezier({p0, p2}));
                 } else {
-                    beziers2.push_back({p0, p1, p2});
+                    quads.push_back(QuadraticBezier({p0, p1, p2}));
                 }
             }
         }
-        // std::cout << "bezier2 count: " << beziers2.size() << "\n";
-        // std::cout << "bezier1 count: " << beziers1.size() << "\n";
 
         size_t constexpr x_discr{256};
         size_t constexpr y_discr{256};
@@ -262,68 +111,18 @@ int main(int argc, char** argv)
                 };
 
                 aa::dvec2 P{xl + x_half, yl + y_half};
-                double min_dist{std::numeric_limits<double>::max()};
-                double min_t{};
-                std::variant<BezierCurve2, BezierCurve1> min_bezier{};
-                for (auto const& bezier2 : beziers2) {
-                    auto const [dist, t] = bezier2_min_dist(bezier2, P);
-                    if (double_eq(dist, min_dist, 10)) {
-                        if (t < min_t) {
-                            min_dist = dist;
-                            min_t = t;
-                            min_bezier = bezier2;
-                        }
-                    } else if (dist < min_dist) {
-                        min_dist = dist;
-                        min_t = t;
-                        min_bezier = bezier2;
+                double signed_distance{std::numeric_limits<double>::max()};
+                for (auto const& quad : quads) {
+                    double csd{quad.signed_distance(P)};
+                    if (std::abs(csd) < std::abs(signed_distance)) {
+                        signed_distance = csd;
                     }
                 }
-                for (auto const& bezier1 : beziers1) {
-                    auto const [dist, t] = bezier1_min_dist(bezier1, P);
-                    if (double_eq(dist, min_dist, 10)) {
-                        if (t < min_t) {
-                            min_dist = dist;
-                            min_t = t;
-                            min_bezier = bezier1;
-                        }
-                    } else if (dist < min_dist) {
-                        min_dist = dist;
-                        min_t = t;
-                        min_bezier = bezier1;
+                for (auto const& lin : lins) {
+                    double csd{lin.signed_distance(P)};
+                    if (std::abs(csd) < std::abs(signed_distance)) {
+                        signed_distance = csd;
                     }
-                }
-                aa::dvec2 derivitive{};
-                aa::dvec2 dist{};
-                double signed_distance{};
-                if (std::holds_alternative<BezierCurve2>(min_bezier)) {
-                    derivitive = bezier2_derivitive(
-                        std::get<BezierCurve2>(min_bezier),
-                        min_t
-                    );
-                    dist = bezier2_evaluate(
-                               std::get<BezierCurve2>(min_bezier),
-                               min_t
-                           ) -
-                           P;
-                } else {
-                    derivitive = bezier1_derivitive(
-                        std::get<BezierCurve1>(min_bezier),
-                        min_t
-                    );
-                    dist = bezier1_evaluate(
-                               std::get<BezierCurve1>(min_bezier),
-                               min_t
-                           ) -
-                           P;
-                }
-                if (std::signbit(aa::cross(
-                        aa::dvec3{derivitive[0], derivitive[1], 0.0},
-                        aa::dvec3{dist[0], dist[1], 0.0}
-                    )[2])) {
-                    signed_distance = -min_dist;
-                } else {
-                    signed_distance = min_dist;
                 }
                 size_t hi = size_t(int(y_discr) - int(y) - 1);
                 size_t wi = x;
@@ -335,7 +134,12 @@ int main(int argc, char** argv)
                          1.0}
                     );
                 } else {
-                    img.ref(hi, wi) = ftou8({1.0, 0.0, 0.0, 1.0});
+                    img.ref(hi, wi) = ftou8(
+                        {static_cast<float>(std::abs(signed_distance)),
+                         0.0,
+                         0.0,
+                         1.0}
+                    );
                 }
             }
         }

@@ -7,6 +7,7 @@ target_sources(
     ${CMAKE_CURRENT_SOURCE_DIR}/ttf_parser.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ttf_types.h
     ${CMAKE_CURRENT_SOURCE_DIR}/bezier.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/bezier.cpp
 )
 
 target_include_directories(
