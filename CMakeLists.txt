@@ -14,18 +14,27 @@ endif()
 add_subdirectory(deps)
 add_subdirectory(src/aux)
 add_subdirectory(src/aux/font)
+add_subdirectory(src/gl)
 
-#
+# glyph_view
 add_executable(glyph_view)
 
-target_sources(glyph_view PRIVATE src/glyph_view.cpp src/gl/buffer.h src/gl/shader.h
-    src/gl/shader_object.cpp src/gl/shader_program.cpp src/gl/vao.cpp) 
+target_sources(glyph_view PRIVATE src/glyph_view.cpp) 
 
 target_include_directories(glyph_view PRIVATE SYSTEM deps)
 
-target_include_directories(glyph_view PRIVATE src arrayalgebra)
+target_include_directories(glyph_view PRIVATE 
+    src 
+    arrayalgebra
+)
 
-target_link_libraries(glyph_view PRIVATE ngi_aux ngi_ttf glfw OpenGL::GL)
+target_link_libraries(glyph_view PRIVATE 
+    ngi_gl
+    ngi_aux 
+    ngi_ttf 
+    glfw 
+    OpenGL::GL
+)
 
 #
 add_executable(glyph_sdf)
@@ -38,3 +47,21 @@ target_include_directories(glyph_sdf PRIVATE src arrayalgebra)
 
 target_link_libraries(glyph_sdf PRIVATE ngi_ttf png)
 
+# assignemnt1 
+add_executable(assignment1)
+
+target_sources(assignment1 PRIVATE src/assignment1.cpp) 
+
+target_include_directories(assignment1 PRIVATE SYSTEM deps)
+
+target_include_directories(assignment1 PRIVATE 
+    src 
+    arrayalgebra
+)
+
+target_link_libraries(assignment1 PRIVATE 
+    ngi_gl
+    ngi_aux 
+    glfw 
+    OpenGL::GL
+)
