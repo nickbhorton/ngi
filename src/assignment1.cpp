@@ -1,6 +1,7 @@
 // This is shader golf. Write the shortest shader possible
 
 #include "arrayalgebra.h"
+#include "aux/common_objects.h"
 #include "aux/glfw_wrapper.h"
 #include "gl/buffer.h"
 #include "gl/shader.h"
@@ -34,26 +35,7 @@ int main(int argc, char** argv)
         );
         test_s.update_uniform_vec4f("color", {1.0, 1.0, 1.0, 1.0});
 
-        std::array<aa::vec3, 36> cube{
-            {{-1.0f, -1.0f, -1.0f}, {-1.0f, -1.0f, 1.0f},
-             {-1.0f, 1.0f, 1.0f},   {1.0f, 1.0f, -1.0f},
-             {-1.0f, -1.0f, -1.0f}, {-1.0f, 1.0f, -1.0f},
-             {1.0f, -1.0f, 1.0f},   {-1.0f, -1.0f, -1.0f},
-             {1.0f, -1.0f, -1.0f},  {1.0f, 1.0f, -1.0f},
-             {1.0f, -1.0f, -1.0f},  {-1.0f, -1.0f, -1.0f},
-             {-1.0f, -1.0f, -1.0f}, {-1.0f, 1.0f, 1.0f},
-             {-1.0f, 1.0f, -1.0f},  {1.0f, -1.0f, 1.0f},
-             {-1.0f, -1.0f, 1.0f},  {-1.0f, -1.0f, -1.0f},
-             {-1.0f, 1.0f, 1.0f},   {-1.0f, -1.0f, 1.0f},
-             {1.0f, -1.0f, 1.0f},   {1.0f, 1.0f, 1.0f},
-             {1.0f, -1.0f, -1.0f},  {1.0f, 1.0f, -1.0f},
-             {1.0f, -1.0f, -1.0f},  {1.0f, 1.0f, 1.0f},
-             {1.0f, -1.0f, 1.0f},   {1.0f, 1.0f, 1.0f},
-             {1.0f, 1.0f, -1.0f},   {-1.0f, 1.0f, -1.0f},
-             {1.0f, 1.0f, 1.0f},    {-1.0f, 1.0f, -1.0f},
-             {-1.0f, 1.0f, 1.0f},   {1.0f, 1.0f, 1.0f},
-             {-1.0f, 1.0f, 1.0f},   {1.0f, -1.0f, 1.0f}}
-        };
+        std::array<aa::vec3, 36> cube{ngi::common_obj::cube};
         for (auto& v : cube) {
             v = 0.5f * v;
         }
