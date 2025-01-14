@@ -32,11 +32,45 @@ int main(int argc, char** argv)
             {{"../res/default_shaders/basic.vert.glsl", GL_VERTEX_SHADER},
              {"../res/default_shaders/basic.frag.glsl", GL_FRAGMENT_SHADER}}
         );
+        test_s.update_uniform_vec4f("color", {1.0, 1.0, 1.0, 1.0});
+
+        std::array<aa::vec3, 36> cube{
+            {{-1.0f, -1.0f, -1.0f}, {-1.0f, -1.0f, 1.0f},
+             {-1.0f, 1.0f, 1.0f},   {1.0f, 1.0f, -1.0f},
+             {-1.0f, -1.0f, -1.0f}, {-1.0f, 1.0f, -1.0f},
+             {1.0f, -1.0f, 1.0f},   {-1.0f, -1.0f, -1.0f},
+             {1.0f, -1.0f, -1.0f},  {1.0f, 1.0f, -1.0f},
+             {1.0f, -1.0f, -1.0f},  {-1.0f, -1.0f, -1.0f},
+             {-1.0f, -1.0f, -1.0f}, {-1.0f, 1.0f, 1.0f},
+             {-1.0f, 1.0f, -1.0f},  {1.0f, -1.0f, 1.0f},
+             {-1.0f, -1.0f, 1.0f},  {-1.0f, -1.0f, -1.0f},
+             {-1.0f, 1.0f, 1.0f},   {-1.0f, -1.0f, 1.0f},
+             {1.0f, -1.0f, 1.0f},   {1.0f, 1.0f, 1.0f},
+             {1.0f, -1.0f, -1.0f},  {1.0f, 1.0f, -1.0f},
+             {1.0f, -1.0f, -1.0f},  {1.0f, 1.0f, 1.0f},
+             {1.0f, -1.0f, 1.0f},   {1.0f, 1.0f, 1.0f},
+             {1.0f, 1.0f, -1.0f},   {-1.0f, 1.0f, -1.0f},
+             {1.0f, 1.0f, 1.0f},    {-1.0f, 1.0f, -1.0f},
+             {-1.0f, 1.0f, 1.0f},   {1.0f, 1.0f, 1.0f},
+             {-1.0f, 1.0f, 1.0f},   {1.0f, -1.0f, 1.0f}}
+        };
+        for (auto& v : cube) {
+            v = 0.5f * v;
+        }
+        ngi::gl::StaticBuffer<std::array<aa::vec3, 36>> cube_b{
+            cube,
+            GL_ARRAY_BUFFER
+        };
+        ngi::gl::VertexArrayObject cube_vao{};
+        cube_vao.attach_shader(test_s);
+        cube_vao.attach_buffer_object(cube_b, 0, 3, GL_FLOAT, GL_FALSE, 0);
 
         while (!window.should_close()) {
+            cube_vao.bind();
+            glDrawArrays(GL_TRIANGLES, 0, cube.size());
             window.swap();
         }
     } catch (int& e) {
-        std::cout << "error throw: " << e << "\n";
+        std::cout << "integer error thrown: " << e << "\n";
     }
 }
