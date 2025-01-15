@@ -14,8 +14,8 @@
 Log glog{};
 #endif
 
-int WindowWidth{800};
-int WindowHeight{800};
+int WindowWidth{1920};
+int WindowHeight{1080};
 
 int last_x{WindowWidth / 2};
 int last_y{WindowHeight / 2};
@@ -50,10 +50,12 @@ key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
     }
 }
 
+bool framebuffer_size_callback_active{false};
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     WindowWidth = width;
     WindowHeight = height;
+    framebuffer_size_callback_active = true;
     first_person_camera.set_aspect_ratio(
         static_cast<GLfloat>(WindowWidth) / static_cast<GLfloat>(WindowHeight)
     );
@@ -127,7 +129,9 @@ int main(int argc, char** argv)
     // objects.
     try {
         ngi::glfw::Wrapper wrap{};
-        ngi::glfw::Window window{wrap.generate_window(800, 800, key_callback)};
+        ngi::glfw::Window window{
+            wrap.generate_window(WindowWidth, WindowHeight, key_callback)
+        };
         glfwSetFramebufferSizeCallback(
             window.get_window_ptr(),
             framebuffer_size_callback
@@ -141,10 +145,11 @@ int main(int argc, char** argv)
         glEnable(GL_DEPTH_TEST);
 
         ngi::gl::ShaderProgram test_s(
-            {{"../res/default_shaders/basic.vert.glsl", GL_VERTEX_SHADER},
-             {"../res/default_shaders/basic.frag.glsl", GL_FRAGMENT_SHADER}}
+            {{"../res/assignment_shaders/assignment1.vert.glsl", GL_VERTEX_SHADER},
+             {"../res/assignment_shaders/assignment1.frag.glsl", GL_FRAGMENT_SHADER}}
         );
-        test_s.update_uniform_vec4f("color", {1.0, 1.0, 1.0, 1.0});
+        test_s.update_uniform_1i("window_width", WindowWidth);
+        test_s.update_uniform_1i("window_height", WindowHeight);
 
         std::array<aa::vec3, 36> cube{ngi::common_obj::cube};
         for (auto& v : cube) {
@@ -176,6 +181,11 @@ int main(int argc, char** argv)
                 "view",
                 first_person_camera.get_view_matrix()
             );
+            if (framebuffer_size_callback_active) {
+                test_s.update_uniform_1i("window_width", WindowWidth);
+                test_s.update_uniform_1i("window_height", WindowHeight);
+                framebuffer_size_callback_active = false;
+            }
         }
     } catch (int& e) {
         std::cout << "integer error thrown: " << e << "\n";
