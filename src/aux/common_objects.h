@@ -5,7 +5,7 @@
 namespace ngi::common_obj
 {
 
-std::array<aa::vec3, 36> constexpr cube{
+std::array<aa::vec3, 36> constexpr cube_positions{
     {{-1.0f, -1.0f, -1.0f}, {-1.0f, -1.0f, 1.0f},  {-1.0f, 1.0f, 1.0f},
      {1.0f, 1.0f, -1.0f},   {-1.0f, -1.0f, -1.0f}, {-1.0f, 1.0f, -1.0f},
      {1.0f, -1.0f, 1.0f},   {-1.0f, -1.0f, -1.0f}, {1.0f, -1.0f, -1.0f},
@@ -19,4 +19,5 @@ std::array<aa::vec3, 36> constexpr cube{
      {1.0f, 1.0f, 1.0f},    {-1.0f, 1.0f, -1.0f},  {-1.0f, 1.0f, 1.0f},
      {1.0f, 1.0f, 1.0f},    {-1.0f, 1.0f, 1.0f},   {1.0f, -1.0f, 1.0f}}
 };
+
 }
