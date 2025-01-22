@@ -100,20 +100,9 @@ void main() {
 
     float blue = 0.0;
 
-    float dist = length(quad_evaluate(P0, p1, p2, 0.0) - P);
-    if (dist < min_dist) {
-        min_dist = dist;
-        min_t = 0.0;
-        blue = 1.0;
-    }
-    dist = length(quad_evaluate(P0, p1, p2, 1.0) - P);
-    if (dist < min_dist) {
-        min_dist = dist;
-        min_t = 1.0;
-        blue = 0.0;
-    }
+    float dist;
     if (ts[0] > 0.0 && ts[0] < 1.0) {
-        dist = length(quad_evaluate(P0, p1, p2, ts[0]) - P);
+        dist = distance(quad_evaluate(P0, p1, p2, ts[0]), P);
         if (dist < min_dist) {
             min_dist = dist;
             min_t = ts[0];
@@ -121,7 +110,7 @@ void main() {
         }
     }
     if (ts[1] > 0.0 && ts[1] < 1.0) {
-        dist = length(quad_evaluate(P0, p1, p2, ts[1]) - P);
+        dist = distance(quad_evaluate(P0, p1, p2, ts[1]), P);
         if (dist < min_dist) {
             min_dist = dist;
             min_t = ts[1];
@@ -129,16 +118,28 @@ void main() {
         }
     }
     if (ts[2] > 0.0 && ts[2] < 1.0) {
-        dist = length(quad_evaluate(P0, p1, p2, ts[2]) - P);
+        dist = distance(quad_evaluate(P0, p1, p2, ts[2]), P);
         if (dist < min_dist) {
             min_dist = dist;
             min_t = ts[2];
             blue = 0.0;
         }
     }
+    dist = distance(quad_evaluate(P0, p1, p2, 0.0), P);
+    if (dist < min_dist) {
+        min_dist = dist;
+        min_t = 0.0;
+        blue = 0.0;
+    }
+    dist = distance(quad_evaluate(P0, p1, p2, 1.0), P);
+    if (dist < min_dist) {
+        min_dist = dist;
+        min_t = 1.0;
+        blue = 0.0;
+    }
 
     fColor = vec4(
-        vec3(abs(dist),dist,blue),
+        vec3(dist,dist,blue),
         1.0
     );
 }

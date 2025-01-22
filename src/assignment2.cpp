@@ -207,10 +207,10 @@ int main(int argc, char** argv)
                  GL_FRAGMENT_SHADER}
             });
         std::array<ngi::gl::ShaderProgram, shader_count> shader_array{
+            std::move(quad_bezier_s),
             std::move(default_s),
             std::move(circle_s),
-            std::move(rectangle_s),
-            std::move(quad_bezier_s)
+            std::move(rectangle_s)
         };
 
         std::array<aa::vec3, 8> cube_gen_pos{{
