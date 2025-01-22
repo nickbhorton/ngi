@@ -14,6 +14,8 @@ build
 
 deps/glad/*
 
+assignment*
+
 .clang*
 .cache
 

@@ -197,32 +197,32 @@ int main(int argc, char** argv)
 
         auto default_s =
             ngi::gl::ShaderProgram(std::vector<std::pair<std::string, GLenum>>{
-                {"../res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
-                {"../res/assignment_shaders/default.2.frag.glsl",
+                {"res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
+                {"res/assignment_shaders/default.2.frag.glsl",
                  GL_FRAGMENT_SHADER}
             });
         auto circle_s =
             ngi::gl::ShaderProgram(std::vector<std::pair<std::string, GLenum>>{
-                {"../res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
-                {"../res/assignment_shaders/circle.2.frag.glsl",
-                 GL_FRAGMENT_SHADER}
+                {"res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
+                {"res/assignment_shaders/circle.2.frag.glsl", GL_FRAGMENT_SHADER
+                }
             });
         auto rectangle_s =
             ngi::gl::ShaderProgram(std::vector<std::pair<std::string, GLenum>>{
-                {"../res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
-                {"../res/assignment_shaders/rectangle.2.frag.glsl",
+                {"res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
+                {"res/assignment_shaders/rectangle.2.frag.glsl",
                  GL_FRAGMENT_SHADER}
             });
         auto qbezier_df_s =
             ngi::gl::ShaderProgram(std::vector<std::pair<std::string, GLenum>>{
-                {"../res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
-                {"../res/assignment_shaders/qbezier_df.2.frag.glsl",
+                {"res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
+                {"res/assignment_shaders/qbezier_df.2.frag.glsl",
                  GL_FRAGMENT_SHADER}
             });
         auto qbezier_sdf_s =
             ngi::gl::ShaderProgram(std::vector<std::pair<std::string, GLenum>>{
-                {"../res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
-                {"../res/assignment_shaders/qbezier_sdf.2.frag.glsl",
+                {"res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
+                {"res/assignment_shaders/qbezier_sdf.2.frag.glsl",
                  GL_FRAGMENT_SHADER}
             });
         std::array<ngi::gl::ShaderProgram, shader_count> shader_array{
