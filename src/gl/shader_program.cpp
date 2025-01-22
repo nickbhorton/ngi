@@ -134,6 +134,15 @@ void ShaderProgram::update_uniform_mat4f(
     auto flat_data = aa::flatten(new_val);
     glUniformMatrix4fv(location, 1, GL_FALSE, flat_data.data());
 }
+void ShaderProgram::update_uniform_vec2f(
+    std::string const& uniform_name,
+    aa::vec2 const& new_val
+)
+{
+    this->bind();
+    GLint location = glGetUniformLocation(name, uniform_name.c_str());
+    glUniform2fv(location, 1, new_val.data());
+}
 
 void ShaderProgram::update_uniform_vec3f(
     std::string const& uniform_name,

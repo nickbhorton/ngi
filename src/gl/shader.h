@@ -59,6 +59,10 @@ public:
         std::string const& uniform_name,
         aa::mat4 const& new_val
     );
+    void update_uniform_vec2f(
+        std::string const& uniform_name,
+        aa::vec2 const& new_val
+    );
     void update_uniform_vec3f(
         std::string const& uniform_name,
         aa::vec3 const& new_val

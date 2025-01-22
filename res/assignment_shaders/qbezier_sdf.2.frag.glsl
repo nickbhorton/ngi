@@ -5,6 +5,7 @@ layout (location = 0) out vec4 fColor;
 in vec2 uv;
 
 uniform vec4 vary;
+uniform vec2 vary2;
 
 vec2 quad_evaluate(vec2 P0, vec2 p1, vec2 p2, float t) {
     return (t * t * p2) + (2.0 * t * p1) + P0;
@@ -81,9 +82,9 @@ vec3 solve_cubic(float a, float b, float c, float d) {
 }
 
 void main() {
-    vec2 P0 = vec2(0.25,0.25);
-    vec2 P1 = vec2(0.5,0.75);
-    vec2 P2 = vec2(0.75,0.25);
+    vec2 P0 = vec2(vary.x, vary.y);
+    vec2 P1 = vec2(vary2.x,vary2.y);
+    vec2 P2 = vec2(vary.z, vary.w);
     vec2 P = uv;
 
     vec2 p = P - P0;
@@ -100,8 +101,6 @@ void main() {
     float min_t = 3.402823466e+38;
 
     float dist;
-    /*
-    */
     dist = distance(quad_evaluate(P0, p1, p2, 0.0), P);
     if (dist < min_dist) {
         min_dist = dist;
@@ -111,7 +110,7 @@ void main() {
     dist = distance(quad_evaluate(P0, p1, p2, 1.0), P);
     if (dist < min_dist) {
         min_dist = dist;
-        min_t = 0.0;
+        min_t = 1.0;
     }
     if (ts[0] > 0.0 && ts[0] < 1.0) {
         dist = distance(quad_evaluate(P0, p1, p2, ts[0]), P);
@@ -135,8 +134,22 @@ void main() {
         }
     }
 
-    fColor = vec4(
-        vec3(min_dist,min_dist,min_dist),
-        1.0
-    );
+    vec2 dt = quad_derivative(P0, P1, P2, min_t);
+    vec2 bntmp = quad_evaluate(P0, p1, p2, min_t) - P;
+
+    vec3 cross1 = vec3(dt[0], dt[1], 0.0);
+    vec3 cross2 = vec3(bntmp[0], bntmp[1], 0.0);
+    vec3 crossed = cross(cross1,cross2);
+    if (crossed.z < 0.0) {
+        fColor = vec4(
+            vec3(0.0,0.0,min_dist),
+            1.0
+        );
+    }
+    else {
+        fColor = vec4(
+            vec3(min_dist,0.0,0.0),
+            1.0
+        );
+    }
 }

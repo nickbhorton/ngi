@@ -35,9 +35,10 @@ Camera first_person_camera(
     45
 );
 
-aa::vec4 vary{0.0, 0.0, 0.5, 0.5};
+aa::vec4 vary{0.25, 0.25, 0.75, 0.25};
+aa::vec2 vary2{0.5, 0.75};
 size_t shader_index = 0;
-size_t constexpr shader_count = 4;
+size_t constexpr shader_count = 5;
 
 static void
 key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -146,6 +147,18 @@ void key_frame_updates(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS) {
         vary[3] += vary_amount;
     }
+    if (glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS) {
+        vary2[0] -= vary_amount;
+    }
+    if (glfwGetKey(window, GLFW_KEY_6) == GLFW_PRESS) {
+        vary2[0] += vary_amount;
+    }
+    if (glfwGetKey(window, GLFW_KEY_7) == GLFW_PRESS) {
+        vary2[1] -= vary_amount;
+    }
+    if (glfwGetKey(window, GLFW_KEY_8) == GLFW_PRESS) {
+        vary2[1] += vary_amount;
+    }
 
     if (update_mouse) {
         first_person_camera.get_pitch_ref() -= mouse_yoffset;
@@ -200,14 +213,21 @@ int main(int argc, char** argv)
                 {"../res/assignment_shaders/rectangle.2.frag.glsl",
                  GL_FRAGMENT_SHADER}
             });
-        auto quad_bezier_s =
+        auto qbezier_df_s =
             ngi::gl::ShaderProgram(std::vector<std::pair<std::string, GLenum>>{
                 {"../res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
-                {"../res/assignment_shaders/quad_bezier.2.frag.glsl",
+                {"../res/assignment_shaders/qbezier_df.2.frag.glsl",
+                 GL_FRAGMENT_SHADER}
+            });
+        auto qbezier_sdf_s =
+            ngi::gl::ShaderProgram(std::vector<std::pair<std::string, GLenum>>{
+                {"../res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
+                {"../res/assignment_shaders/qbezier_sdf.2.frag.glsl",
                  GL_FRAGMENT_SHADER}
             });
         std::array<ngi::gl::ShaderProgram, shader_count> shader_array{
-            std::move(quad_bezier_s),
+            std::move(qbezier_sdf_s),
+            std::move(qbezier_df_s),
             std::move(default_s),
             std::move(circle_s),
             std::move(rectangle_s)
@@ -257,7 +277,7 @@ int main(int argc, char** argv)
         cube_vao.attach_buffer_object(cube_uv_b, 1, 2, GL_FLOAT, GL_FALSE, 0);
 
         while (!window.should_close()) {
-            std::array<GLfloat, 4> static constexpr bg_color{0, 0, 0.25, 1};
+            std::array<GLfloat, 4> static constexpr bg_color{0, 0, 0.0, 1};
             glClearBufferfv(GL_COLOR, 0, bg_color.data());
             glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -276,6 +296,7 @@ int main(int argc, char** argv)
                 first_person_camera.get_view_matrix()
             );
             shader_array[shader_index].update_uniform_vec4f("vary", vary);
+            shader_array[shader_index].update_uniform_vec2f("vary2", vary2);
 
             shader_array[shader_index].update_uniform_mat4f(
                 "model",
