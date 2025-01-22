@@ -33,6 +33,7 @@ class ShaderProgram
 {
     GLuint name;
     std::vector<ShaderObject> sos;
+    bool moved;
 
     void attatch(ShaderObject const& shader);
 
@@ -43,7 +44,7 @@ public:
     ShaderProgram(ShaderProgram const& other) = delete;
     ShaderProgram operator=(ShaderProgram const& other) = delete;
 
-    ShaderProgram(ShaderProgram&& other) noexcept = delete;
+    ShaderProgram(ShaderProgram&& other) noexcept;
     ShaderProgram& operator=(ShaderProgram&& other) = delete;
 
     auto get_name() const -> GLuint;

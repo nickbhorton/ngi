@@ -18,7 +18,7 @@ VertexArrayObject::VertexArrayObject() : shader_name(0)
     );
 #endif
 }
-void VertexArrayObject::attach_shader(ShaderProgram const& shader)
+void VertexArrayObject::set_shader(ShaderProgram const& shader)
 {
     shader_name = shader.get_name();
 }

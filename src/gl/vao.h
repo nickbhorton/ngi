@@ -34,7 +34,7 @@ public:
         GLsizei stride
     );
 
-    void attach_shader(ShaderProgram const& shader);
+    void set_shader(ShaderProgram const& shader);
 
     template <typename T> void attach_element_array(StaticBuffer<T>& buffer);
 

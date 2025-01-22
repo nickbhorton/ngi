@@ -2,7 +2,6 @@
 
 #include "arrayalgebra.h"
 #include "aux/camera.h"
-#include "aux/common_objects.h"
 #include "aux/glfw_wrapper.h"
 #include "gl/buffer.h"
 #include "gl/shader.h"
@@ -36,6 +35,10 @@ Camera first_person_camera(
     45
 );
 
+aa::vec4 vary{0.0, 0.0, 0.5, 0.5};
+size_t shader_index = 0;
+size_t constexpr shader_count = 3;
+
 static void
 key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -47,6 +50,15 @@ key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
     }
     if (key == GLFW_KEY_P && action == GLFW_PRESS) {
         first_person_camera.set_perspective_mode();
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_9) == GLFW_PRESS && shader_index > 0) {
+        shader_index--;
+    }
+    if (glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS &&
+        shader_index < shader_count - 1) {
+        shader_index++;
+        std::cout << shader_index << std::endl;
     }
 }
 
@@ -109,6 +121,32 @@ void key_frame_updates(GLFWwindow* window)
             camera_speed * aa::vec3({0, 1, 0});
     }
 
+    float constexpr vary_amount = 0.01;
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+        vary[0] -= vary_amount;
+    }
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+        vary[0] += vary_amount;
+    }
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+        vary[1] -= vary_amount;
+    }
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+        vary[1] += vary_amount;
+    }
+    if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
+        vary[2] -= vary_amount;
+    }
+    if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
+        vary[2] += vary_amount;
+    }
+    if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS) {
+        vary[3] -= vary_amount;
+    }
+    if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS) {
+        vary[3] += vary_amount;
+    }
+
     if (update_mouse) {
         first_person_camera.get_pitch_ref() -= mouse_yoffset;
         first_person_camera.get_yaw_ref() += mouse_xoffset;
@@ -144,10 +182,29 @@ int main(int argc, char** argv)
         );
         glEnable(GL_DEPTH_TEST);
 
-        ngi::gl::ShaderProgram test_s(
-            {{"../res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
-             {"../res/assignment_shaders/2.frag.glsl", GL_FRAGMENT_SHADER}}
-        );
+        auto default_s =
+            ngi::gl::ShaderProgram(std::vector<std::pair<std::string, GLenum>>{
+                {"../res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
+                {"../res/assignment_shaders/default.2.frag.glsl",
+                 GL_FRAGMENT_SHADER}
+            });
+        auto circle_s =
+            ngi::gl::ShaderProgram(std::vector<std::pair<std::string, GLenum>>{
+                {"../res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
+                {"../res/assignment_shaders/circle.2.frag.glsl",
+                 GL_FRAGMENT_SHADER}
+            });
+        auto rectangle_s =
+            ngi::gl::ShaderProgram(std::vector<std::pair<std::string, GLenum>>{
+                {"../res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
+                {"../res/assignment_shaders/rectangle.2.frag.glsl",
+                 GL_FRAGMENT_SHADER}
+            });
+        std::array<ngi::gl::ShaderProgram, shader_count> shader_array{
+            std::move(default_s),
+            std::move(circle_s),
+            std::move(rectangle_s)
+        };
 
         std::array<aa::vec3, 8> cube_gen_pos{{
             {0.5, -0.5, -0.5},
@@ -188,29 +245,35 @@ int main(int argc, char** argv)
             GL_ARRAY_BUFFER
         };
         ngi::gl::VertexArrayObject cube_vao{};
-        cube_vao.attach_shader(test_s);
+        cube_vao.set_shader(shader_array[0]);
         cube_vao.attach_buffer_object(cube_pos_b, 0, 3, GL_FLOAT, GL_FALSE, 0);
         cube_vao.attach_buffer_object(cube_uv_b, 1, 2, GL_FLOAT, GL_FALSE, 0);
 
         while (!window.should_close()) {
-            std::array<GLfloat, 4> static constexpr bg_color{0, 0, 0, 1};
+            std::array<GLfloat, 4> static constexpr bg_color{0, 0, 0.25, 1};
             glClearBufferfv(GL_COLOR, 0, bg_color.data());
             glClear(GL_DEPTH_BUFFER_BIT);
 
+            cube_vao.set_shader(shader_array[shader_index]);
             cube_vao.bind();
             glDrawArrays(GL_TRIANGLES, 0, cube_pos.size());
             window.swap();
 
             key_frame_updates(window.get_window_ptr());
-            test_s.update_uniform_mat4f(
+            shader_array[shader_index].update_uniform_mat4f(
                 "proj",
                 first_person_camera.get_proj_matrix()
             );
-            test_s.update_uniform_mat4f(
+            shader_array[shader_index].update_uniform_mat4f(
                 "view",
                 first_person_camera.get_view_matrix()
             );
-            test_s.update_uniform_mat4f("model", aa::identity<float, 4>());
+            shader_array[shader_index].update_uniform_vec4f("vary", vary);
+
+            shader_array[shader_index].update_uniform_mat4f(
+                "model",
+                aa::identity<float, 4>()
+            );
             if (framebuffer_size_callback_active) {
                 framebuffer_size_callback_active = false;
             }

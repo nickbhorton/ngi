@@ -66,7 +66,7 @@ int main(int argc, char** argv)
             vertex_positions.push_back({-0.5, 0.5, 0.0});
             ngi::gl::StaticBuffer test_b(vertex_positions, GL_ARRAY_BUFFER);
             ngi::gl::VertexArrayObject test_vao{};
-            test_vao.attach_shader(test_s);
+            test_vao.set_shader(test_s);
             test_vao.attach_buffer_object(test_b, 0, 3, GL_FLOAT, GL_FALSE, 0);
             vaos.push_back(std::move(test_vao));
             buffers.push_back(std::move(test_b));
@@ -110,7 +110,7 @@ int main(int argc, char** argv)
             }
             ngi::gl::StaticBuffer test_b(vertex_positions, GL_ARRAY_BUFFER);
             ngi::gl::VertexArrayObject test_vao{};
-            test_vao.attach_shader(test_s);
+            test_vao.set_shader(test_s);
             test_vao.attach_buffer_object(test_b, 0, 3, GL_FLOAT, GL_FALSE, 0);
             vaos.push_back(std::move(test_vao));
             buffers.push_back(std::move(test_b));

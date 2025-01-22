@@ -30,6 +30,7 @@ void report_program_info_log(GLuint name, std::string const& msg)
 ShaderProgram::ShaderProgram(std::vector<std::pair<std::string, GLenum>> shaders
 )
 {
+    moved = false;
     name = glCreateProgram();
     if (!name) {
 #ifdef NGI_LOG
@@ -81,14 +82,26 @@ auto ShaderProgram::get_name() const -> GLuint { return name; }
 
 ShaderProgram::~ShaderProgram()
 {
-    glDeleteProgram(name);
+    if (!moved) {
+        glDeleteProgram(name);
 #ifdef NGI_LOG
-    glog.add(
-        LogLevel::Status,
-        "ngi::gl::shader_program::Destructor",
-        std::to_string(name) + std::string(" was destructed")
-    );
+        glog.add(
+            LogLevel::Status,
+            "ngi::gl::shader_program::Destructor",
+            std::to_string(name) + std::string(" was destructed")
+        );
 #endif
+    }
+}
+ShaderProgram::ShaderProgram(ShaderProgram&& other) noexcept
+{
+    moved = false;
+    other.moved = true;
+    name = other.name;
+    for (size_t i = 0; i < other.sos.size(); i++) {
+        sos.push_back(std::move(other.sos[i]));
+    }
+    other.sos.clear();
 }
 
 void ShaderProgram::update_uniform_1f(

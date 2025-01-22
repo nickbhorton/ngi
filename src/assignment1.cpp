@@ -162,7 +162,7 @@ int main(int argc, char** argv)
             GL_ARRAY_BUFFER
         };
         ngi::gl::VertexArrayObject cube_vao{};
-        cube_vao.attach_shader(test_s);
+        cube_vao.set_shader(test_s);
         cube_vao.attach_buffer_object(cube_b, 0, 3, GL_FLOAT, GL_FALSE, 0);
 
         while (!window.should_close()) {
