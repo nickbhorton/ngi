@@ -37,7 +37,7 @@ Camera first_person_camera(
 
 aa::vec4 vary{0.0, 0.0, 0.5, 0.5};
 size_t shader_index = 0;
-size_t constexpr shader_count = 3;
+size_t constexpr shader_count = 4;
 
 static void
 key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -200,10 +200,17 @@ int main(int argc, char** argv)
                 {"../res/assignment_shaders/rectangle.2.frag.glsl",
                  GL_FRAGMENT_SHADER}
             });
+        auto quad_bezier_s =
+            ngi::gl::ShaderProgram(std::vector<std::pair<std::string, GLenum>>{
+                {"../res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
+                {"../res/assignment_shaders/quad_bezier.2.frag.glsl",
+                 GL_FRAGMENT_SHADER}
+            });
         std::array<ngi::gl::ShaderProgram, shader_count> shader_array{
             std::move(default_s),
             std::move(circle_s),
-            std::move(rectangle_s)
+            std::move(rectangle_s),
+            std::move(quad_bezier_s)
         };
 
         std::array<aa::vec3, 8> cube_gen_pos{{
