@@ -7,7 +7,7 @@ in vec2 uv;
 uniform vec4 vary;
 
 vec2 quad_evaluate(vec2 P0, vec2 p1, vec2 p2, float t) {
-    return t * t * p2 + 2.0 * t * p1 + P0;
+    return (t * t * p2) + (2.0 * t * p1) + P0;
 }
 
 vec2 quad_derivative(vec2 P0, vec2 P1, vec2 P2, float t) {
@@ -15,10 +15,11 @@ vec2 quad_derivative(vec2 P0, vec2 P1, vec2 P2, float t) {
 }
 
 vec3 solve_cubic(float a, float b, float c, float d) {
-    float M_PI = 3.14159;
+    float M_PI = 3.141592653589793;
     b = b / a;
     c = c / a;
     d = d / a;
+
     float q = (3.0 * c - (b * b)) / 9.0;
     float r = -(27.0 * d) + b * (9.0 * c - 2.0 * (b * b));
     r = r / 54.0;
@@ -98,15 +99,25 @@ void main() {
     float min_dist = 3.402823466e+38;
     float min_t = 3.402823466e+38;
 
-    float blue = 0.0;
-
     float dist;
+    /*
+    */
+    dist = distance(quad_evaluate(P0, p1, p2, 0.0), P);
+    if (dist < min_dist) {
+        min_dist = dist;
+        min_t = 0.0;
+    }
+
+    dist = distance(quad_evaluate(P0, p1, p2, 1.0), P);
+    if (dist < min_dist) {
+        min_dist = dist;
+        min_t = 0.0;
+    }
     if (ts[0] > 0.0 && ts[0] < 1.0) {
         dist = distance(quad_evaluate(P0, p1, p2, ts[0]), P);
         if (dist < min_dist) {
             min_dist = dist;
             min_t = ts[0];
-            blue = 0.0;
         }
     }
     if (ts[1] > 0.0 && ts[1] < 1.0) {
@@ -114,7 +125,6 @@ void main() {
         if (dist < min_dist) {
             min_dist = dist;
             min_t = ts[1];
-            blue = 0.0;
         }
     }
     if (ts[2] > 0.0 && ts[2] < 1.0) {
@@ -122,24 +132,11 @@ void main() {
         if (dist < min_dist) {
             min_dist = dist;
             min_t = ts[2];
-            blue = 0.0;
         }
-    }
-    dist = distance(quad_evaluate(P0, p1, p2, 0.0), P);
-    if (dist < min_dist) {
-        min_dist = dist;
-        min_t = 0.0;
-        blue = 0.0;
-    }
-    dist = distance(quad_evaluate(P0, p1, p2, 1.0), P);
-    if (dist < min_dist) {
-        min_dist = dist;
-        min_t = 1.0;
-        blue = 0.0;
     }
 
     fColor = vec4(
-        vec3(dist,dist,blue),
+        vec3(min_dist,min_dist,min_dist),
         1.0
     );
 }
