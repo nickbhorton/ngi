@@ -4,7 +4,9 @@
 #include "gl/buffer.h"
 #include "gl/shader.h"
 #include "gl/vao.h"
-#include "log/log.h"
+#include <GLFW/glfw3.h>
+
+#include <chrono>
 
 #ifdef NGI_LOG
 #include "log/log.h"
@@ -23,7 +25,7 @@ float mouse_yoffset{0.0f};
 bool update_mouse{false};
 
 Camera first_person_camera(
-    {0, 0, 10},
+    {0, 0, 1.8},
     90.0f,
     0,
     {0, 1, 0},
@@ -32,11 +34,6 @@ Camera first_person_camera(
     100.0,
     45
 );
-
-aa::vec4 vary{0.25, 0.25, 0.75, 0.25};
-aa::vec2 vary2{0.5, 0.75};
-size_t shader_index = 0;
-size_t constexpr shader_count = 5;
 
 static void
 key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -49,15 +46,6 @@ key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
     }
     if (key == GLFW_KEY_P && action == GLFW_PRESS) {
         first_person_camera.set_perspective_mode();
-    }
-
-    if (glfwGetKey(window, GLFW_KEY_9) == GLFW_PRESS && shader_index > 0) {
-        shader_index--;
-    }
-    if (glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS &&
-        shader_index < shader_count - 1) {
-        shader_index++;
-        std::cout << shader_index << std::endl;
     }
 }
 
@@ -120,44 +108,6 @@ void key_frame_updates(GLFWwindow* window)
             camera_speed * aa::vec3({0, 1, 0});
     }
 
-    float constexpr vary_amount = 0.01;
-    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-        vary[0] -= vary_amount;
-    }
-    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-        vary[0] += vary_amount;
-    }
-    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-        vary[1] -= vary_amount;
-    }
-    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-        vary[1] += vary_amount;
-    }
-    if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
-        vary[2] -= vary_amount;
-    }
-    if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
-        vary[2] += vary_amount;
-    }
-    if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS) {
-        vary[3] -= vary_amount;
-    }
-    if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS) {
-        vary[3] += vary_amount;
-    }
-    if (glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS) {
-        vary2[0] -= vary_amount;
-    }
-    if (glfwGetKey(window, GLFW_KEY_6) == GLFW_PRESS) {
-        vary2[0] += vary_amount;
-    }
-    if (glfwGetKey(window, GLFW_KEY_7) == GLFW_PRESS) {
-        vary2[1] -= vary_amount;
-    }
-    if (glfwGetKey(window, GLFW_KEY_8) == GLFW_PRESS) {
-        vary2[1] += vary_amount;
-    }
-
     if (update_mouse) {
         first_person_camera.get_pitch_ref() -= mouse_yoffset;
         first_person_camera.get_yaw_ref() += mouse_xoffset;
@@ -181,6 +131,8 @@ int main(int argc, char** argv)
         ngi::glfw::Window window{
             wrap.generate_window(WindowWidth, WindowHeight, key_callback)
         };
+        // turn off vsync
+        glfwSwapInterval(0);
         glfwSetFramebufferSizeCallback(
             window.get_window_ptr(),
             framebuffer_size_callback
@@ -195,40 +147,41 @@ int main(int argc, char** argv)
 
         auto default_s =
             ngi::gl::ShaderProgram(std::vector<std::pair<std::string, GLenum>>{
-                {"res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
-                {"res/assignment_shaders/default.2.frag.glsl",
+                {"../res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
+                {"../res/assignment_shaders/default3.frag.glsl",
                  GL_FRAGMENT_SHADER}
             });
-        auto circle_s =
+        auto glyph1_s =
             ngi::gl::ShaderProgram(std::vector<std::pair<std::string, GLenum>>{
-                {"res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
-                {"res/assignment_shaders/circle.2.frag.glsl", GL_FRAGMENT_SHADER
-                }
-            });
-        auto rectangle_s =
-            ngi::gl::ShaderProgram(std::vector<std::pair<std::string, GLenum>>{
-                {"res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
-                {"res/assignment_shaders/rectangle.2.frag.glsl",
+                {"../res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
+                {"../res/assignment_shaders/glyph1_3.frag.glsl",
                  GL_FRAGMENT_SHADER}
             });
-        auto qbezier_df_s =
+        auto glyph2_s =
             ngi::gl::ShaderProgram(std::vector<std::pair<std::string, GLenum>>{
-                {"res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
-                {"res/assignment_shaders/qbezier_df.2.frag.glsl",
+                {"../res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
+                {"../res/assignment_shaders/glyph2_3.frag.glsl",
                  GL_FRAGMENT_SHADER}
             });
-        auto qbezier_sdf_s =
+        auto glyph3_s =
             ngi::gl::ShaderProgram(std::vector<std::pair<std::string, GLenum>>{
-                {"res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
-                {"res/assignment_shaders/qbezier_sdf.2.frag.glsl",
+                {"../res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
+                {"../res/assignment_shaders/glyph3_3.frag.glsl",
                  GL_FRAGMENT_SHADER}
             });
+        auto glyph4_s =
+            ngi::gl::ShaderProgram(std::vector<std::pair<std::string, GLenum>>{
+                {"../res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
+                {"../res/assignment_shaders/glyph4_3.frag.glsl",
+                 GL_FRAGMENT_SHADER}
+            });
+        size_t constexpr shader_count{5};
         std::array<ngi::gl::ShaderProgram, shader_count> shader_array{
-            std::move(qbezier_sdf_s),
-            std::move(qbezier_df_s),
             std::move(default_s),
-            std::move(circle_s),
-            std::move(rectangle_s)
+            std::move(glyph1_s),
+            std::move(glyph2_s),
+            std::move(glyph3_s),
+            std::move(glyph4_s),
         };
 
         std::array<aa::vec3, 8> cube_gen_pos{{
@@ -274,35 +227,64 @@ int main(int argc, char** argv)
         cube_vao.attach_buffer_object(cube_pos_b, 0, 3, GL_FLOAT, GL_FALSE, 0);
         cube_vao.attach_buffer_object(cube_uv_b, 1, 2, GL_FLOAT, GL_FALSE, 0);
 
-        while (!window.should_close()) {
-            std::array<GLfloat, 4> static constexpr bg_color{0, 0, 0.0, 1};
-            glClearBufferfv(GL_COLOR, 0, bg_color.data());
-            glClear(GL_DEPTH_BUFFER_BIT);
-
-            cube_vao.set_shader(shader_array[shader_index]);
-            cube_vao.bind();
-            glDrawArrays(GL_TRIANGLES, 0, cube_pos.size());
-            window.swap();
-
-            key_frame_updates(window.get_window_ptr());
+        size_t constexpr frame_count = 60;
+        for (size_t shader_index = 0; shader_index < shader_array.size();
+             shader_index++) {
             shader_array[shader_index].update_uniform_mat4f(
-                "proj",
-                first_person_camera.get_proj_matrix()
+                "model",
+                aa::identity<float, 4>()
             );
             shader_array[shader_index].update_uniform_mat4f(
                 "view",
                 first_person_camera.get_view_matrix()
             );
-            shader_array[shader_index].update_uniform_vec4f("vary", vary);
-            shader_array[shader_index].update_uniform_vec2f("vary2", vary2);
-
             shader_array[shader_index].update_uniform_mat4f(
-                "model",
-                aa::identity<float, 4>()
+                "proj",
+                first_person_camera.get_proj_matrix()
             );
-            if (framebuffer_size_callback_active) {
-                framebuffer_size_callback_active = false;
+            std::array<double, frame_count - 1> measurments{};
+            for (size_t i = 0; i < frame_count; i++) {
+                std::array<GLfloat, 4> static constexpr bg_color{0, 0, 0.0, 1};
+                glClearBufferfv(GL_COLOR, 0, bg_color.data());
+                glClear(GL_DEPTH_BUFFER_BIT);
+
+                cube_vao.set_shader(shader_array[shader_index]);
+                cube_vao.bind();
+
+                auto start_time = std::chrono::high_resolution_clock::now();
+                glDrawArrays(GL_TRIANGLES, 0, cube_pos.size());
+                window.swap();
+                auto end_time = std::chrono::high_resolution_clock::now();
+
+                auto duration_us =
+                    std::chrono::duration_cast<std::chrono::microseconds>(
+                        end_time - start_time
+                    );
+                // throw away frame 0 because it unusually fast
+                if (i != 0) {
+                    measurments[i - 1] =
+                        static_cast<double>(duration_us.count());
+                }
+
+                key_frame_updates(window.get_window_ptr());
+                if (framebuffer_size_callback_active) {
+                    framebuffer_size_callback_active = false;
+                }
             }
+            double mean = 0.0;
+            for (auto const& m : measurments) {
+                mean += m;
+            }
+            mean /= static_cast<double>(measurments.size());
+            double stddev = 0.0;
+            for (auto const& m : measurments) {
+                stddev += std::pow((m - mean), 2);
+            }
+            stddev /= static_cast<double>(measurments.size() - 1);
+            stddev = std::sqrt(stddev);
+            std::cout << "shader " << shader_index << ": ";
+            std::cout << mean / 1000.0 << " ms +/- ";
+            std::cout << stddev / 1000.0 << " ms\n";
         }
     } catch (int& e) {
         std::cout << "integer error thrown: " << e << "\n";

@@ -84,3 +84,22 @@ target_link_libraries(assignment2 PRIVATE
     glfw 
     OpenGL::GL
 )
+
+# assignment3
+add_executable(assignment3)
+
+target_sources(assignment3 PRIVATE src/assignment3.cpp) 
+
+target_include_directories(assignment3 PRIVATE SYSTEM deps)
+
+target_include_directories(assignment3 PRIVATE 
+    src 
+    arrayalgebra
+)
+
+target_link_libraries(assignment3 PRIVATE 
+    ngi_gl
+    ngi_aux 
+    glfw 
+    OpenGL::GL
+)
