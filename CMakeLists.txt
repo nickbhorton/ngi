@@ -36,7 +36,7 @@ target_link_libraries(glyph_view PRIVATE
     OpenGL::GL
 )
 
-#
+# glyph_sdf
 add_executable(glyph_sdf)
 
 target_sources(glyph_sdf PRIVATE src/glyph_sdf.cpp) 
@@ -101,5 +101,19 @@ target_link_libraries(assignment3 PRIVATE
     ngi_gl
     ngi_aux 
     glfw 
+    OpenGL::GL
+)
+
+
+# assignment4
+add_executable(assignment4)
+
+target_sources(assignment4 PRIVATE src/assignment4.cpp) 
+
+target_include_directories(assignment4 PRIVATE SYSTEM deps)
+
+target_link_libraries(assignment4 PRIVATE 
+    glfw 
+    vulkan
     OpenGL::GL
 )

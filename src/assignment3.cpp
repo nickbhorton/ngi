@@ -147,32 +147,32 @@ int main(int argc, char** argv)
 
         auto default_s =
             ngi::gl::ShaderProgram(std::vector<std::pair<std::string, GLenum>>{
-                {"../res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
-                {"../res/assignment_shaders/default3.frag.glsl",
+                {"./res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
+                {"./res/assignment_shaders/default3.frag.glsl",
                  GL_FRAGMENT_SHADER}
             });
         auto glyph1_s =
             ngi::gl::ShaderProgram(std::vector<std::pair<std::string, GLenum>>{
-                {"../res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
-                {"../res/assignment_shaders/glyph1_3.frag.glsl",
+                {"./res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
+                {"./res/assignment_shaders/glyph1_3.frag.glsl",
                  GL_FRAGMENT_SHADER}
             });
         auto glyph2_s =
             ngi::gl::ShaderProgram(std::vector<std::pair<std::string, GLenum>>{
-                {"../res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
-                {"../res/assignment_shaders/glyph2_3.frag.glsl",
+                {"./res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
+                {"./res/assignment_shaders/glyph2_3.frag.glsl",
                  GL_FRAGMENT_SHADER}
             });
         auto glyph3_s =
             ngi::gl::ShaderProgram(std::vector<std::pair<std::string, GLenum>>{
-                {"../res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
-                {"../res/assignment_shaders/glyph3_3.frag.glsl",
+                {"./res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
+                {"./res/assignment_shaders/glyph3_3.frag.glsl",
                  GL_FRAGMENT_SHADER}
             });
         auto glyph4_s =
             ngi::gl::ShaderProgram(std::vector<std::pair<std::string, GLenum>>{
-                {"../res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
-                {"../res/assignment_shaders/glyph4_3.frag.glsl",
+                {"./res/assignment_shaders/2.vert.glsl", GL_VERTEX_SHADER},
+                {"./res/assignment_shaders/glyph4_3.frag.glsl",
                  GL_FRAGMENT_SHADER}
             });
         size_t constexpr shader_count{5};
@@ -227,7 +227,7 @@ int main(int argc, char** argv)
         cube_vao.attach_buffer_object(cube_pos_b, 0, 3, GL_FLOAT, GL_FALSE, 0);
         cube_vao.attach_buffer_object(cube_uv_b, 1, 2, GL_FLOAT, GL_FALSE, 0);
 
-        size_t constexpr frame_count = 60;
+        size_t constexpr frame_count = 600;
         for (size_t shader_index = 0; shader_index < shader_array.size();
              shader_index++) {
             shader_array[shader_index].update_uniform_mat4f(
