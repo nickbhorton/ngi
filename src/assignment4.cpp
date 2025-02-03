@@ -1,11 +1,15 @@
+#include <vulkan/vulkan_core.h>
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+
 #include <iostream>
+#include <vector>
 
 namespace vulk
 {
 class WindowSurface;
-};
+class PhysicalDevice;
+}; // namespace vulk
 
 class Glfw
 {
@@ -121,7 +125,8 @@ class Instance
 {
     VkInstance instance;
 
-    friend vulk::WindowSurface;
+    friend WindowSurface;
+    friend PhysicalDevice;
 
 public:
     Instance()
@@ -159,6 +164,8 @@ class WindowSurface
     VkSurfaceKHR surface;
     Instance& bound_instance;
 
+    friend PhysicalDevice;
+
 public:
     WindowSurface(Instance& instance, Window& window) : bound_instance(instance)
     {
@@ -179,6 +186,74 @@ public:
     }
 };
 
+class PhysicalDevice
+{
+    uint32_t present_family;
+    uint32_t graphics_family;
+
+public:
+    PhysicalDevice(Instance& instance, WindowSurface& surface)
+    {
+        uint32_t deviceCount{};
+        vkEnumeratePhysicalDevices(instance.instance, &deviceCount, NULL);
+        if (deviceCount == 0) {
+            std::cerr << "PhysicalDevice() fail: "
+                      << "there are no physical devices that support vulkan"
+                      << "\n";
+            throw 1;
+        }
+        std::vector<VkPhysicalDevice> physical_devices{deviceCount};
+        vkEnumeratePhysicalDevices(
+            instance.instance,
+            &deviceCount,
+            &physical_devices[0]
+        );
+        std::cout << "physical device count " << deviceCount << "\n";
+        const char* deviceExtensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+
+        VkPhysicalDevice physical_device{VK_NULL_HANDLE};
+        for (uint32_t i = 0;
+             i < deviceCount && physical_device == VK_NULL_HANDLE;
+             i++) {
+            uint32_t queueFamilyCount{0};
+            vkGetPhysicalDeviceQueueFamilyProperties(
+                physical_devices[i],
+                &queueFamilyCount,
+                NULL
+            );
+            std::vector<VkQueueFamilyProperties> queueFamilies{queueFamilyCount
+            };
+            vkGetPhysicalDeviceQueueFamilyProperties(
+                physical_devices[i],
+                &queueFamilyCount,
+                &queueFamilies[0]
+            );
+            VkBool32 suitable = VK_FALSE;
+            for (int32_t j = 0; j < queueFamilyCount && !suitable; j++) {
+                VkBool32 presentSupport = VK_FALSE;
+                vkGetPhysicalDeviceSurfaceSupportKHR(
+                    physical_devices[i],
+                    j,
+                    surface.surface,
+                    &presentSupport
+                );
+                VkPhysicalDeviceFeatures supportedFeatures;
+                vkGetPhysicalDeviceFeatures(
+                    physical_devices[i],
+                    &supportedFeatures
+                );
+                if (presentSupport &&
+                    queueFamilies[j].queueFlags & VK_QUEUE_GRAPHICS_BIT &&
+                    supportedFeatures.samplerAnisotropy) {
+                    suitable = VK_TRUE;
+                    present_family = j;
+                    graphics_family = j;
+                }
+            }
+        }
+    }
+};
+
 }; // namespace vulk
 
 int main()
@@ -192,5 +267,6 @@ int main()
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     Window window{600, 600, "Vulk"};
     vulk::Instance instance{};
-    vulk::WindowSurface(instance, window);
+    vulk::WindowSurface sufrace(instance, window);
+    vulk::PhysicalDevice pdevice(instance);
 }
