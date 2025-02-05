@@ -115,5 +115,5 @@ target_include_directories(assignment4 PRIVATE SYSTEM deps)
 target_link_libraries(assignment4 PRIVATE 
     glfw 
     vulkan
-    m
+    glm
 )
