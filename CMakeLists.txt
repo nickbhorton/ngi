@@ -117,3 +117,22 @@ target_link_libraries(assignment4 PRIVATE
     vulkan
     glm
 )
+
+# assignment6
+add_executable(assignment6)
+
+target_sources(assignment6 PRIVATE src/assignment6.cpp) 
+
+target_include_directories(assignment6 PRIVATE SYSTEM deps)
+
+target_include_directories(assignment6 PRIVATE 
+    src 
+    arrayalgebra
+)
+
+target_link_libraries(assignment6 PRIVATE 
+    ngi_gl
+    ngi_aux 
+    glfw 
+    OpenGL::GL
+)

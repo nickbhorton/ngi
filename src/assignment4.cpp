@@ -15,8 +15,7 @@
 namespace vulk
 {
 
-const std::vector<const char*> validationLayers = {"VK_LAYER_KHRONOS_validation"
-};
+const std::vector<const char*> validationLayers = {};
 const bool enableValidationLayers = true;
 
 bool checkValidationLayerSupport()

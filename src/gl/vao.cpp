@@ -25,10 +25,10 @@ void VertexArrayObject::set_shader(ShaderProgram const& shader)
 
 void VertexArrayObject::bind()
 {
-    glBindVertexArray(name);
     if (shader_name) {
         glUseProgram(shader_name);
     }
+    glBindVertexArray(name);
 }
 
 VertexArrayObject::~VertexArrayObject()
