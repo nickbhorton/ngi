@@ -6,6 +6,8 @@ target_sources(ngi_gl PRIVATE
     shader_object.cpp 
     shader_program.cpp 
     vao.cpp
+    texture.h
+    texture.cpp
 ) 
 
 target_include_directories(ngi_gl PRIVATE SYSTEM ${CMAKE_SOURCE_DIR}/deps)

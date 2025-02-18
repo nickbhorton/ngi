@@ -2,13 +2,10 @@
 #include "aux/glfw_wrapper.h"
 #include "gl/buffer.h"
 #include "gl/shader.h"
+#include "gl/texture.h"
 #include "gl/vao.h"
-#include <GLFW/glfw3.h>
 
-#ifdef NGI_LOG
-#include "log/log.h"
-Log glog{};
-#endif
+#include <GLFW/glfw3.h>
 
 int WindowWidth{800};
 int WindowHeight{800};
@@ -42,11 +39,20 @@ int main(int argc, char** argv)
     );
     glEnable(GL_DEPTH_TEST);
 
-    auto basic_s =
+    ngi::gl::ShaderProgram basic_s =
         ngi::gl::ShaderProgram(std::vector<std::pair<std::string, GLenum>>{
             {"../res/assignment_shaders/6.vert.glsl", GL_VERTEX_SHADER},
             {"../res/assignment_shaders/6.frag.glsl", GL_FRAGMENT_SHADER}
         });
+
+    ngi::gl::Texture tex1{"../res/images/taylor.jpg"};
+    basic_s.update_uniform_vec2f(
+        "img_res",
+        {static_cast<float>(tex1.size[0]), static_cast<float>(tex1.size[1])}
+    );
+    basic_s.update_uniform_1f("k", 2.0);
+    basic_s.update_uniform_1f("sig", 2.0);
+    basic_s.update_uniform_1f("radius", 5.0);
 
     std::array<aa::vec2, 4> quad_uv{{{0, 0}, {0, 1}, {1, 1}, {1, 0}}};
     std::array<aa::vec3, 4> quad_pos{

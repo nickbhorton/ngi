@@ -20,4 +20,6 @@ assignment3
 
 .clang*
 .cache
+src/aux/png/stb_image.h
+res/images/*
 

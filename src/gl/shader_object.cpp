@@ -20,6 +20,8 @@ void report_shader_info_log(GLuint name, std::string const& msg)
         &info_log_length,
         (GLchar*)error_log.data()
     );
+    std::cerr << "ngi::gl::shader_object::Constructor" << msg
+              << std::string(": ") << error_log << "\n";
 #ifdef NGI_LOG
     glog.add(
         LogLevel::CriticalError,
