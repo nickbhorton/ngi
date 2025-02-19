@@ -61,27 +61,27 @@ int main(int argc, char** argv)
     std::vector<ngi::gl::ShaderProgram> shaders{};
     shaders.push_back(
         ngi::gl::ShaderProgram(std::vector<std::pair<std::string, GLenum>>{
-            {"../res/assignment_shaders/6.vert.glsl", GL_VERTEX_SHADER},
-            {"../res/assignment_shaders/dog.6.frag.glsl", GL_FRAGMENT_SHADER}
+            {"./res/assignment_shaders/6.vert.glsl", GL_VERTEX_SHADER},
+            {"./res/assignment_shaders/dog.6.frag.glsl", GL_FRAGMENT_SHADER}
         })
     );
     shaders.push_back(
         ngi::gl::ShaderProgram(std::vector<std::pair<std::string, GLenum>>{
-            {"../res/assignment_shaders/6.vert.glsl", GL_VERTEX_SHADER},
-            {"../res/assignment_shaders/thresh_dog.6.frag.glsl",
+            {"./res/assignment_shaders/6.vert.glsl", GL_VERTEX_SHADER},
+            {"./res/assignment_shaders/thresh_dog.6.frag.glsl",
              GL_FRAGMENT_SHADER}
         })
     );
     shaders.push_back(
         ngi::gl::ShaderProgram(std::vector<std::pair<std::string, GLenum>>{
-            {"../res/assignment_shaders/6.vert.glsl", GL_VERTEX_SHADER},
-            {"../res/assignment_shaders/tanh_dog.6.frag.glsl",
-             GL_FRAGMENT_SHADER}
+            {"./res/assignment_shaders/6.vert.glsl", GL_VERTEX_SHADER},
+            {"./res/assignment_shaders/tanh_dog.6.frag.glsl", GL_FRAGMENT_SHADER
+            }
         })
     );
 
     int current_shader{0};
-    ngi::gl::Texture tex1{"../res/images/zebras.jpg"};
+    ngi::gl::Texture tex1{"./res/images/zebras.jpg"};
 
     for (auto& s : shaders) {
         s.update_uniform_vec2f(
