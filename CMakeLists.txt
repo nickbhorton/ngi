@@ -133,6 +133,7 @@ target_include_directories(assignment6 PRIVATE
 target_link_libraries(assignment6 PRIVATE 
     ngi_gl
     ngi_aux 
+    ngi_imgui
     glfw 
     OpenGL::GL
 )

@@ -8,9 +8,14 @@ in vec2 uv;
 
 uniform vec2 img_res;
 uniform sampler2D tex;
+
+// dog stuff
 uniform float sig;
 uniform float k;
 uniform float radius;
+uniform float tau;
+uniform float thresh;
+uniform float phi;
 
 float gaussian(vec2 v, float sigma) {
     float x = v.x;
@@ -21,16 +26,19 @@ float gaussian(vec2 v, float sigma) {
 }
 
 void main() {
-
-    vec4 color_sum = vec4(0.0);
+    float color_sum = 0.0;
     for(float x = -radius; x <= radius; x += 1){
         for(float y = -radius; y <= radius; y += 1){
             vec2 pixel_offset = vec2(x,y);
             vec2 uv_offset = pixel_offset / img_res.xy;
-            vec4 g1 = gaussian(pixel_offset, sig) * texture(tex, uv + uv_offset);
-            vec4 g2 = gaussian(pixel_offset, k * sig) * texture(tex, uv + uv_offset);
-            color_sum += g1 - g2;
+            float g1 = gaussian(pixel_offset, sig) * length(texture(tex, uv + uv_offset));
+            float g2 = gaussian(pixel_offset, k * sig) * length(texture(tex, uv + uv_offset));
+            color_sum += (1.0 + tau) * g1 - tau * g2;
         }   
     }
-    fColor = vec4(color_sum);
+
+    fColor = vec4(vec3(1.0 + tanh(phi * (color_sum - thresh))), 1.0);
+    if (color_sum > thresh) {
+        fColor = vec4(1.0);
+    }
 }
