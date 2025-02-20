@@ -75,7 +75,6 @@ target_sources(assignment4 PRIVATE src/assignment4.cpp)
 target_link_libraries(assignment4 PRIVATE 
     glfw 
     vulkan
-    glm
 )
 
 # assignment6
