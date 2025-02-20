@@ -10,14 +10,12 @@ target_sources(ngi_gl PRIVATE
     texture.cpp
 ) 
 
-target_include_directories(ngi_gl PRIVATE SYSTEM ${CMAKE_SOURCE_DIR}/deps)
-
-target_include_directories(ngi_gl PRIVATE 
+target_include_directories(ngi_gl PUBLIC 
     ${CMAKE_SOURCE_DIR}/src 
     ${CMAKE_SOURCE_DIR}/arrayalgebra
 )
 
-target_link_libraries(ngi_gl PRIVATE 
+target_link_libraries(ngi_gl PUBLIC 
     ngi_glad 
     glfw 
     OpenGL::GL

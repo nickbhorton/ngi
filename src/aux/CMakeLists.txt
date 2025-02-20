@@ -5,8 +5,6 @@ target_sources(ngi_aux PRIVATE
     camera.h camera.cpp
 ) 
 
-target_include_directories(ngi_aux PRIVATE SYSTEM ${CMAKE_SOURCE_DIR}/deps)
-
 target_include_directories(ngi_aux PRIVATE 
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/arrayalgebra

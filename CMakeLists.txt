@@ -21,27 +21,16 @@ add_executable(glyph_view)
 
 target_sources(glyph_view PRIVATE src/glyph_view.cpp) 
 
-target_include_directories(glyph_view PRIVATE SYSTEM deps)
-
-target_include_directories(glyph_view PRIVATE 
-    src 
-    arrayalgebra
-)
-
 target_link_libraries(glyph_view PRIVATE 
-    ngi_gl
     ngi_aux 
+    ngi_gl
     ngi_ttf 
-    glfw 
-    OpenGL::GL
 )
 
 # glyph_sdf
 add_executable(glyph_sdf)
 
 target_sources(glyph_sdf PRIVATE src/glyph_sdf.cpp) 
-
-target_include_directories(glyph_sdf PRIVATE SYSTEM deps)
 
 target_include_directories(glyph_sdf PRIVATE src arrayalgebra)
 
@@ -52,18 +41,9 @@ add_executable(assignment1)
 
 target_sources(assignment1 PRIVATE src/assignment1.cpp) 
 
-target_include_directories(assignment1 PRIVATE SYSTEM deps)
-
-target_include_directories(assignment1 PRIVATE 
-    src 
-    arrayalgebra
-)
-
 target_link_libraries(assignment1 PRIVATE 
     ngi_gl
     ngi_aux 
-    glfw 
-    OpenGL::GL
 )
 
 # assignemnt2
@@ -71,18 +51,9 @@ add_executable(assignment2)
 
 target_sources(assignment2 PRIVATE src/assignment2.cpp) 
 
-target_include_directories(assignment2 PRIVATE SYSTEM deps)
-
-target_include_directories(assignment2 PRIVATE 
-    src 
-    arrayalgebra
-)
-
 target_link_libraries(assignment2 PRIVATE 
     ngi_gl
     ngi_aux 
-    glfw 
-    OpenGL::GL
 )
 
 # assignment3
@@ -90,18 +61,9 @@ add_executable(assignment3)
 
 target_sources(assignment3 PRIVATE src/assignment3.cpp) 
 
-target_include_directories(assignment3 PRIVATE SYSTEM deps)
-
-target_include_directories(assignment3 PRIVATE 
-    src 
-    arrayalgebra
-)
-
 target_link_libraries(assignment3 PRIVATE 
     ngi_gl
     ngi_aux 
-    glfw 
-    OpenGL::GL
 )
 
 
@@ -109,8 +71,6 @@ target_link_libraries(assignment3 PRIVATE
 add_executable(assignment4)
 
 target_sources(assignment4 PRIVATE src/assignment4.cpp) 
-
-target_include_directories(assignment4 PRIVATE SYSTEM deps)
 
 target_link_libraries(assignment4 PRIVATE 
     glfw 
@@ -123,17 +83,8 @@ add_executable(assignment6)
 
 target_sources(assignment6 PRIVATE src/assignment6.cpp) 
 
-target_include_directories(assignment6 PRIVATE SYSTEM deps)
-
-target_include_directories(assignment6 PRIVATE 
-    src 
-    arrayalgebra
-)
-
 target_link_libraries(assignment6 PRIVATE 
     ngi_gl
     ngi_aux 
     ngi_imgui
-    glfw 
-    OpenGL::GL
 )
