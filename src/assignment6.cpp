@@ -9,7 +9,10 @@
 #include "imgui/backends/imgui_impl_opengl3.h"
 #include "imgui/imgui.h"
 
-#include <GLFW/glfw3.h>
+#ifdef NGI_LOG
+#include "log/log.h"
+Log glog{};
+#endif
 
 int WindowWidth{1200};
 int WindowHeight{800};

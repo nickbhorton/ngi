@@ -1,10 +1,10 @@
 #include "texture.h"
+#include <string>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "aux/png/stb_image.h"
 
 #include <iostream>
-#include <stdexcept>
 
 using namespace ngi::gl;
 
@@ -29,7 +29,14 @@ Texture::Texture(std::string const& path)
         stbi_load(path.c_str(), &size[0], &size[1], &number_of_channels, 0);
 
     if (!data) {
-        throw std::runtime_error("Failed to load texture from " + path);
+#ifdef NGI_LOG
+        glog.add(
+            LogLevel::Error,
+            "ngi::gl::texture::Constructor",
+            "texture at " + path + " failed to load data"
+        );
+#endif
+        return;
     }
 
     glTexImage2D(
@@ -45,10 +52,26 @@ Texture::Texture(std::string const& path)
     );
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    std::cout << path << ": (" << size[0] << ", " << size[1] << ") "
-              << number_of_channels << "\n";
-
+#ifdef NGI_LOG
+    glog.add(
+        LogLevel::Status,
+        "ngi::gl::texture::Constructor",
+        "texture " + path + "(" + std::to_string(name) + ")" + " of size " +
+            std::to_string(size[0]) + "x" + std::to_string(size[1]) + " with " +
+            std::to_string(number_of_channels) + " channels was constructed"
+    );
+#endif
     stbi_image_free(data);
 }
 
-Texture::~Texture() { glDeleteTextures(1, &name); }
+Texture::~Texture()
+{
+#ifdef NGI_LOG
+    glog.add(
+        LogLevel::Status,
+        "ngi::gl::texture::Constructor",
+        "texture " + std::to_string(name) + " was destructed"
+    );
+#endif
+    glDeleteTextures(1, &name);
+}

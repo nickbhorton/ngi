@@ -7,7 +7,6 @@
 #include "gl/buffer.h"
 #include "gl/shader.h"
 #include "gl/vao.h"
-#include "log/log.h"
 
 #ifdef NGI_LOG
 #include "log/log.h"

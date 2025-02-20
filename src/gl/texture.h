@@ -5,6 +5,11 @@
 
 #include "arrayalgebra.h"
 
+#ifdef NGI_LOG
+#include "log/log.h"
+extern Log glog;
+#endif // DEBUG
+
 namespace ngi::gl
 {
 
