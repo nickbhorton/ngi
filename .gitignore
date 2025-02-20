@@ -15,9 +15,7 @@ deps/glad/*
 
 deps/imgui
 
-assignment1
-assignment2
-assignment3
+assignment*
 
 .clang*
 .cache
