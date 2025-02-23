@@ -5,6 +5,7 @@
 #include "aux/glfw_wrapper.h"
 #include "gl/buffer.h"
 #include "gl/shader.h"
+#include "gl/texture.h"
 #include "gl/vao.h"
 
 #include "imgui/backends/imgui_impl_glfw.h"
@@ -206,6 +207,8 @@ int main(int argc, char** argv)
 
     // For my graphics to only render on left
     glViewport(0, 0, GraphicsWindowWidth, GraphicsWindowHeight);
+
+    ngi::gl::Texture rock_disp{"../res/images/rock7/rock7_diff.jpg"};
 
     while (!window.should_close()) {
         std::array<GLfloat, 4> static constexpr bg_color{0, 0, 0, 1};
