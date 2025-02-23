@@ -22,7 +22,7 @@ int last_y{GraphicsWindowHeight / 2};
 float mouse_xoffset{0.0f};
 float mouse_yoffset{0.0f};
 
-bool update_mouse{false};
+bool cursor_update{false};
 
 Camera first_person_camera(
     {0, 0, 10},
@@ -71,7 +71,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     float constexpr sensitivity = 0.1f;
     mouse_xoffset *= sensitivity;
     mouse_yoffset *= sensitivity;
-    update_mouse = true;
+    cursor_update = true;
 }
 
 void key_frame_updates(GLFWwindow* window)
@@ -108,7 +108,7 @@ void key_frame_updates(GLFWwindow* window)
             camera_speed * aa::vec3({0, 1, 0});
     }
 
-    if (update_mouse) {
+    if (cursor_update) {
         first_person_camera.get_pitch_ref() -= mouse_yoffset;
         first_person_camera.get_yaw_ref() += mouse_xoffset;
 
@@ -118,7 +118,7 @@ void key_frame_updates(GLFWwindow* window)
         if (first_person_camera.get_pitch() < -89.0f) {
             first_person_camera.get_pitch_ref() = -89.0f;
         }
-        update_mouse = false;
+        cursor_update = false;
     }
 }
 
