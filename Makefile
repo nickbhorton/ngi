@@ -1,7 +1,7 @@
 CMAKE_BUILD_DIR:=./build
 CMAKE_SOURCE_DIR:=.
 
-all: assignment2 assignment3 assignment4 assignment6
+all: assignment6
 
 assignment2: $(CMAKE_BUILD_DIR)/assignment2
 	cp $(CMAKE_BUILD_DIR)/assignment2 assignment2
