@@ -11,11 +11,11 @@
 Log glog{};
 #endif
 
-int WindowWidth{1920};
-int WindowHeight{1080};
+int GraphicsWindowWidth{1920};
+int GraphicsWindowHeight{1080};
 
-int last_x{WindowWidth / 2};
-int last_y{WindowHeight / 2};
+int last_x{GraphicsWindowWidth / 2};
+int last_y{GraphicsWindowHeight / 2};
 
 float mouse_xoffset{0.0f};
 float mouse_yoffset{0.0f};
@@ -27,7 +27,7 @@ Camera first_person_camera(
     90.0f,
     0,
     {0, 1, 0},
-    static_cast<float>(WindowWidth) / static_cast<float>(WindowHeight),
+    static_cast<float>(GraphicsWindowWidth) / static_cast<float>(GraphicsWindowHeight),
     0.1,
     100.0,
     45
@@ -64,11 +64,11 @@ key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 bool framebuffer_size_callback_active{false};
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
-    WindowWidth = width;
-    WindowHeight = height;
+    GraphicsWindowWidth = width;
+    GraphicsWindowHeight = height;
     framebuffer_size_callback_active = true;
     first_person_camera.set_aspect_ratio(
-        static_cast<GLfloat>(WindowWidth) / static_cast<GLfloat>(WindowHeight)
+        static_cast<GLfloat>(GraphicsWindowWidth) / static_cast<GLfloat>(GraphicsWindowHeight)
     );
     glViewport(0, 0, width, height);
 }
@@ -179,7 +179,7 @@ int main(int argc, char** argv)
     try {
         ngi::glfw::Wrapper wrap{};
         ngi::glfw::Window window{
-            wrap.generate_window(WindowWidth, WindowHeight, key_callback)
+            wrap.generate_window(GraphicsWindowWidth, GraphicsWindowHeight, key_callback)
         };
         glfwSetFramebufferSizeCallback(
             window.get_window_ptr(),

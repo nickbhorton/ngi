@@ -15,8 +15,6 @@ deps/glad/*
 
 deps/imgui
 
-assignment*
-
 .clang*
 .cache
 src/aux/png/stb_image.h

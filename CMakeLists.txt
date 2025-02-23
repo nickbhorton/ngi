@@ -87,3 +87,14 @@ target_link_libraries(assignment6 PRIVATE
     ngi_aux 
     ngi_imgui
 )
+
+# assignemnt7
+add_executable(assignment7)
+
+target_sources(assignment7 PRIVATE src/assignment7.cpp) 
+
+target_link_libraries(assignment7 PRIVATE 
+    ngi_gl
+    ngi_aux 
+    ngi_imgui
+)

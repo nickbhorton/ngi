@@ -14,8 +14,8 @@
 Log glog{};
 #endif
 
-int WindowWidth{1200};
-int WindowHeight{800};
+int GraphicsWindowWidth{1200};
+int GraphicsWindowHeight{800};
 
 int ImageWindowWidth{800};
 int ImageWindowHeight{800};
@@ -30,8 +30,8 @@ key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
-    WindowWidth = width;
-    WindowHeight = height;
+    GraphicsWindowWidth = width;
+    GraphicsWindowHeight = height;
     glViewport(0, 0, width, height);
 }
 
@@ -39,7 +39,7 @@ int main(int argc, char** argv)
 {
     ngi::glfw::Wrapper wrap{};
     ngi::glfw::Window window{
-        wrap.generate_window(WindowWidth, WindowHeight, key_callback)
+        wrap.generate_window(GraphicsWindowWidth, GraphicsWindowHeight, key_callback)
     };
 
     // turn off vsync
@@ -96,7 +96,7 @@ int main(int argc, char** argv)
     std::array<aa::vec2, 4> quad_uv{{{0, 0}, {0, 1}, {1, 1}, {1, 0}}};
     float image_max_x{
         (2.0f * (static_cast<float>(ImageWindowWidth) /
-                 static_cast<float>(WindowWidth))) -
+                 static_cast<float>(GraphicsWindowWidth))) -
         1.0f
     };
     std::array<aa::vec3, 4> quad_pos{
@@ -151,7 +151,7 @@ int main(int argc, char** argv)
         ImGui::Begin("Difference of Gaussians", &open, window_flags);
         ImGui::SetWindowPos(ImVec2(ImageWindowWidth, 0), ImGuiCond_Once);
         ImGui::SetWindowSize(
-            ImVec2(WindowWidth - ImageWindowWidth, WindowHeight),
+            ImVec2(GraphicsWindowWidth - ImageWindowWidth, GraphicsWindowHeight),
             ImGuiCond_Once
         );
         ImGui::RadioButton("dog", &current_shader, 0);
