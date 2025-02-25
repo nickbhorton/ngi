@@ -1,8 +1,13 @@
 // This shaders base is from learnopengl.com/PBR/Lighting
 #version 450 core
 
+// constants
+#define PI 3.14159265359
+
+// layout
 layout (location = 0) out vec4 frag_color;
 
+// from vertex shader
 in vec2 uv;
 in vec3 frag_pos;
 
@@ -24,7 +29,6 @@ uniform float ao;
 uniform vec3 light_positions[LIGHT_COUNT];
 uniform vec3 light_colors[LIGHT_COUNT];
 
-#define PI 3.14159265359
 
 float distribution_ggx(vec3 N, vec3 H, float roughness);
 float geometry_schlick_ggx(float NdotV, float roughness);
@@ -33,11 +37,11 @@ vec3 fresnel_schlick(float cosTheta, vec3 F0);
 
 void main()
 {		
-    vec3 Normal = texture(norm,uv).xyz;
-    Normal = normalize(Normal * 2.0 - 1.0);
     vec3 albedo = texture(diff,uv).xyz;
 
-    vec3 N = normalize(Normal);
+    // normal from texture
+    vec3 N = normalize(texture(norm, uv).xyz * 2.0 - 1.0);
+    // direction towards camera
     vec3 V = normalize(camera_position - frag_pos);
 
     vec3 F0 = vec3(0.04); 
