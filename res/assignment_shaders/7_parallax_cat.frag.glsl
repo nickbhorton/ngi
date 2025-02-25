@@ -30,6 +30,7 @@ uniform float ao;
 uniform float ao2;
 uniform float height_scale;
 uniform float parallax_layers;
+uniform float thresh;
 
 // lights
 #define LIGHT_COUNT 1
@@ -54,17 +55,18 @@ void main()
     vec3 N = normalize(texture(norm, puv).xyz * 2.0 - 1.0);
 
     // catagorize
-    vec3 d = texture(diff, uv).rgb;
-    float val = d.g - d.b;
-    float is_grass = step(0.2, val);
+    vec3 d = texture(diff, puv).rgb;
+    float val = d.g / (d.b + d.r);
+    float is_grass = step(thresh, val);
 
     float c_metallic = metallic;
     float c_roughness = roughness;
     float c_ao = ao;
+
     if (is_grass > 0.5) {
-        float c_metallic = metallic2;
-        float c_roughness = roughness2;
-        float c_ao = ao2;
+        c_metallic = metallic2;
+        c_roughness = roughness2;
+        c_ao = ao2;
     }
 
     vec3 F0 = vec3(0.04); 

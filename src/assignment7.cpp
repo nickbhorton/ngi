@@ -307,14 +307,15 @@ int main(int argc, char** argv)
 
         // uniforms
         float metallic{0.5};
-        float metallic2{0.5};
+        float metallic2{0.0};
         float roughness{0.5};
-        float roughness2{0.5};
+        float roughness2{0.6};
         float ao{0.5};
-        float ao2{0.5};
+        float ao2{0.0};
+        float thresh{0.625};
         float height_scale{0.1};
         float parallax_layers{128};
-        aa::vec3 light_pos{0.5, 0.5, 1};
+        aa::vec3 light_pos{0.5, 0.5, 1.0};
         aa::vec3 light_col{1, 1, 1};
 
         while (!window.should_close()) {
@@ -340,6 +341,7 @@ int main(int argc, char** argv)
             shaders[current_s].update_uniform_1f("metallic2", metallic2);
             shaders[current_s].update_uniform_1f("roughness2", roughness2);
             shaders[current_s].update_uniform_1f("ao2", ao2);
+            shaders[current_s].update_uniform_1f("thresh", thresh);
             shaders[current_s].update_uniform_1f("height_scale", height_scale);
             shaders[current_s].update_uniform_1f(
                 "parallax_layers",
@@ -385,7 +387,8 @@ int main(int argc, char** argv)
             ImGui::SliderFloat("Grass Ambient Occlusin", &ao2, 0.0f, 1.0f);
             ImGui::SliderFloat("Height Scale", &height_scale, 0.0f, 1.0f);
             ImGui::SliderFloat("Parallax Layers", &parallax_layers, 0, 1024);
-            ImGui::SliderFloat3("Light Position", light_pos.data(), -1, 1);
+            ImGui::SliderFloat("Threshld", &thresh, 0, 2);
+            ImGui::SliderFloat3("Light Position", light_pos.data(), 0, 2.0);
             ImGui::ColorEdit3("Light Color", light_col.data());
             ImGui::Text("current_s: %i, %.2f FPS", current_s, io.Framerate);
             ImGui::End();

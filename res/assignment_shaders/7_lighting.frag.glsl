@@ -55,7 +55,7 @@ void main()
         vec3 L = normalize(light_positions[i] - frag_pos);
         vec3 H = normalize(V + L);
         float distance    = length(light_positions[i] - frag_pos);
-        float attenuation = 1.0 / (distance * distance);
+        float attenuation = 1.0 / pow(distance, 2.0);
         vec3 radiance     = light_colors[i] * attenuation;        
         
         // cook-torrance brdf
