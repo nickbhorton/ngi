@@ -9,5 +9,5 @@ uniform sampler2D norm;
 uniform sampler2D disp;
 
 void main() {
-    fColor = texture(disp, uv);
+    fColor = vec4(texture(disp, uv).rrr, 1.0);
 }
