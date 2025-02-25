@@ -21,7 +21,7 @@ class Texture
 public:
     aa::ivec2 size;
 
-    Texture(std::string const& path);
+    Texture(std::string const& path, int active_texture);
     ~Texture();
 };
 

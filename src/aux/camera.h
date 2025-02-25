@@ -2,8 +2,6 @@
 
 #include "arrayalgebra.h"
 
-float constexpr camera_speed{0.2};
-
 class Camera
 {
     aa::mat4 view;

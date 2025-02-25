@@ -33,17 +33,19 @@ float mouse_xoffset{0.0f};
 float mouse_yoffset{0.0f};
 
 bool cursor_update{false};
-bool cursor_control{false};
+bool cursor_control{true};
+
+float camera_speed{0.05};
 
 Camera first_person_camera(
-    {0.5, 0.5, 3},
-    90.0f,
+    {0.5, 0.5, 1.25},
+    90,
     0,
     {0, 1, 0},
     static_cast<float>(GraphicsWindowWidth) /
         static_cast<float>(GraphicsWindowHeight),
     0.1,
-    1000.0,
+    1000,
     45
 );
 
@@ -148,109 +150,184 @@ void key_frame_updates(GLFWwindow* window)
 
 int main(int argc, char** argv)
 {
-    // glfw and window setup
-    ngi::glfw::Wrapper wrap{};
-    ngi::glfw::Window window{
-        wrap.generate_window(WindowWidth, WindowHeight, key_callback)
-    };
-    glfwSetFramebufferSizeCallback(
-        window.get_window_ptr(),
-        framebuffer_size_callback
-    );
-    glfwSetCursorPosCallback(window.get_window_ptr(), mouse_callback);
-    glfwSetInputMode(
-        window.get_window_ptr(),
-        GLFW_CURSOR,
-        GLFW_CURSOR_DISABLED
-    );
-    glEnable(GL_DEPTH_TEST);
-
-    // setup ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    io.IniFilename = NULL;
-
-    ImGui_ImplGlfw_InitForOpenGL(window.get_window_ptr(), true);
-    ImGui_ImplOpenGL3_Init();
-
-    ImGuiWindowFlags window_flags_imgui{};
-    window_flags_imgui |= ImGuiWindowFlags_NoMove;
-    window_flags_imgui |= ImGuiWindowFlags_NoResize;
-    window_flags_imgui |= ImGuiWindowFlags_NoTitleBar;
-    window_flags_imgui |= ImGuiWindowFlags_NoCollapse;
-    window_flags_imgui |= ImGuiWindowFlags_NoBackground;
-    bool open_imgui{true};
-
-    // setup shaders
-    ngi::gl::ShaderProgram test_s(
-        {{"../res/assignment_shaders/1.vert.glsl", GL_VERTEX_SHADER},
-         {"../res/assignment_shaders/1.frag.glsl", GL_FRAGMENT_SHADER}}
-    );
-    test_s.update_uniform_1i("window_width", GraphicsWindowWidth);
-    test_s.update_uniform_1i("window_height", GraphicsWindowHeight);
-
-    // setup geometry
-    std::array<aa::vec3, 6> plane{
-        {{0, 0, 0}, {0, 1, 0}, {1, 1, 0}, {1, 1, 0}, {1, 0, 0}, {0, 0, 0}}
-    };
-    ngi::gl::StaticBuffer<std::array<aa::vec3, 6>> cube_b{
-        plane,
-        GL_ARRAY_BUFFER
-    };
-
-    // setup vao
-    ngi::gl::VertexArrayObject plane_vao{};
-    plane_vao.set_shader(test_s);
-    plane_vao.attach_buffer_object(cube_b, 0, 3, GL_FLOAT, GL_FALSE, 0);
-
-    // For my graphics to only render on left
-    glViewport(0, 0, GraphicsWindowWidth, GraphicsWindowHeight);
-
-    ngi::gl::Texture rock_disp{"../res/images/rock7/rock7_diff.jpg"};
-
-    while (!window.should_close()) {
-        std::array<GLfloat, 4> static constexpr bg_color{0, 0, 0, 1};
-        glClearBufferfv(GL_COLOR, 0, bg_color.data());
-        glClear(GL_DEPTH_BUFFER_BIT);
-
-        // Drawing to the canvas
-        plane_vao.bind();
-        glDrawArrays(GL_TRIANGLES, 0, plane.size());
-
-        // Drawing to settings
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-
-        ImGui::Begin("Assignment7", &open_imgui, window_flags_imgui);
-        ImGui::SetWindowPos(ImVec2(800, 0), ImGuiCond_Once);
-        ImGui::SetWindowSize(
-            ImVec2(SettingsWindowWidth, SettingsWindowHeight),
-            ImGuiCond_Once
+    try {
+        // glfw and window setup
+        ngi::glfw::Wrapper wrap{};
+        ngi::glfw::Window window{
+            wrap.generate_window(WindowWidth, WindowHeight, key_callback)
+        };
+        glfwSetFramebufferSizeCallback(
+            window.get_window_ptr(),
+            framebuffer_size_callback
         );
-        ImGui::Text("%.2f FPS", io.Framerate);
-        ImGui::End();
+        glfwSetCursorPosCallback(window.get_window_ptr(), mouse_callback);
+        glEnable(GL_DEPTH_TEST);
 
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        // setup ImGui context
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO& io = ImGui::GetIO();
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+        io.IniFilename = NULL;
 
-        window.swap();
+        ImGui_ImplGlfw_InitForOpenGL(window.get_window_ptr(), true);
+        ImGui_ImplOpenGL3_Init();
 
-        key_frame_updates(window.get_window_ptr());
-        test_s.update_uniform_mat4f(
-            "proj",
-            first_person_camera.get_proj_matrix()
+        ImGuiWindowFlags window_flags_imgui{};
+        window_flags_imgui |= ImGuiWindowFlags_NoMove;
+        window_flags_imgui |= ImGuiWindowFlags_NoResize;
+        window_flags_imgui |= ImGuiWindowFlags_NoTitleBar;
+        window_flags_imgui |= ImGuiWindowFlags_NoCollapse;
+        window_flags_imgui |= ImGuiWindowFlags_NoBackground;
+        bool open_imgui{true};
+
+        // setup shaders
+        int current_s{0};
+        std::vector<ngi::gl::ShaderProgram> shaders{};
+        shaders.push_back(ngi::gl::ShaderProgram(
+            {{"../res/assignment_shaders/7.vert.glsl", GL_VERTEX_SHADER},
+             {"../res/assignment_shaders/7_diff.frag.glsl", GL_FRAGMENT_SHADER}}
+        ));
+        shaders.push_back(ngi::gl::ShaderProgram(
+            {{"../res/assignment_shaders/7.vert.glsl", GL_VERTEX_SHADER},
+             {"../res/assignment_shaders/7_norm.frag.glsl", GL_FRAGMENT_SHADER}}
+        ));
+        shaders.push_back(ngi::gl::ShaderProgram(
+            {{"../res/assignment_shaders/7.vert.glsl", GL_VERTEX_SHADER},
+             {"../res/assignment_shaders/7_disp.frag.glsl", GL_FRAGMENT_SHADER}}
+        ));
+        shaders.push_back(ngi::gl::ShaderProgram(
+            {{"../res/assignment_shaders/7.vert.glsl", GL_VERTEX_SHADER},
+             {"../res/assignment_shaders/7_lighting.frag.glsl",
+              GL_FRAGMENT_SHADER}}
+        ));
+        int diff_s{0};
+        int norm_s{1};
+        int disp_s{2};
+        int ligh_s{3};
+
+        // setup geometry
+        std::array<aa::vec3, 6> plane_positions{
+            {{0, 0, 0}, {0, 1, 0}, {1, 1, 0}, {1, 1, 0}, {1, 0, 0}, {0, 0, 0}}
+        };
+        ngi::gl::StaticBuffer<std::array<aa::vec3, 6>> plane_positions_b{
+            plane_positions,
+            GL_ARRAY_BUFFER
+        };
+
+        std::array<aa::vec3, 6> plane_uvs{
+            {{0, 0}, {0, 1}, {1, 1}, {1, 1}, {1, 0}, {0, 0}}
+        };
+        ngi::gl::StaticBuffer<std::array<aa::vec3, 6>> plane_uvs_b{
+            plane_uvs,
+            GL_ARRAY_BUFFER
+        };
+
+        // setup vao
+        ngi::gl::VertexArrayObject plane_vao{};
+        plane_vao.attach_buffer_object(
+            plane_positions_b,
+            0,
+            3,
+            GL_FLOAT,
+            GL_FALSE,
+            0
         );
-        test_s.update_uniform_mat4f(
-            "view",
-            first_person_camera.get_view_matrix()
-        );
-        if (framebuffer_size_callback_active) {
-            test_s.update_uniform_1i("window_width", GraphicsWindowWidth);
-            test_s.update_uniform_1i("window_height", GraphicsWindowHeight);
-            framebuffer_size_callback_active = false;
+        plane_vao
+            .attach_buffer_object(plane_uvs_b, 1, 3, GL_FLOAT, GL_FALSE, 0);
+
+        // For my graphics to only render on left
+        glViewport(0, 0, GraphicsWindowWidth, GraphicsWindowHeight);
+
+        ngi::gl::Texture rock_diff{
+            "../res/images/rock7/rock7_diff.jpg",
+            GL_TEXTURE0
+        };
+        ngi::gl::Texture rock_disp{
+            "../res/images/rock7/rock7_disp.png",
+            GL_TEXTURE1
+        };
+        ngi::gl::Texture rock_norm{
+            "../res/images/rock7/rock7_nor.png",
+            GL_TEXTURE2
+        };
+
+        for (auto& s : shaders) {
+            s.update_uniform_1i("diff", 0);
+            s.update_uniform_1i("disp", 1);
+            s.update_uniform_1i("norm", 2);
         }
+
+        // uniforms
+        float metallic{0.5};
+        float roughness{0.5};
+        float ao{0.5};
+        aa::vec3 light_pos{0.5, 0.5, 1};
+        aa::vec3 light_col{1, 1, 1};
+
+        while (!window.should_close()) {
+            key_frame_updates(window.get_window_ptr());
+
+            // uniform
+            shaders[current_s].bind();
+            shaders[current_s].update_uniform_mat4f(
+                "proj",
+                first_person_camera.get_proj_matrix()
+            );
+            shaders[current_s].update_uniform_mat4f(
+                "view",
+                first_person_camera.get_view_matrix()
+            );
+            shaders[current_s].update_uniform_vec3f(
+                "camera_position",
+                first_person_camera.get_camera_position()
+            );
+            shaders[current_s].update_uniform_1f("metallic", metallic);
+            shaders[current_s].update_uniform_1f("roughness", roughness);
+            shaders[current_s].update_uniform_1f("ao", ao);
+            shaders[current_s].update_uniform_vec3f(
+                "light_positions",
+                light_pos
+            );
+            shaders[current_s].update_uniform_vec3f("light_colors", light_col);
+
+            // background
+            std::array<GLfloat, 4> static constexpr bg_color{0, 0, 0, 1};
+            glClearBufferfv(GL_COLOR, 0, bg_color.data());
+            glClear(GL_DEPTH_BUFFER_BIT);
+
+            // Drawing to the canvas
+            plane_vao.bind();
+            glDrawArrays(GL_TRIANGLES, 0, plane_positions.size());
+
+            // Drawing to settings
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplGlfw_NewFrame();
+            ImGui::NewFrame();
+
+            ImGui::Begin("Assignment7", &open_imgui, window_flags_imgui);
+            ImGui::SetWindowPos(ImVec2(GraphicsWindowWidth, 0));
+            ImGui::SetWindowSize(
+                ImVec2(SettingsWindowWidth, SettingsWindowHeight)
+            );
+            ImGui::RadioButton("Diffuse", &current_s, diff_s);
+            ImGui::RadioButton("Normal", &current_s, norm_s);
+            ImGui::RadioButton("Displacement", &current_s, disp_s);
+            ImGui::RadioButton("Lighting", &current_s, ligh_s);
+            ImGui::SliderFloat("Metallic", &metallic, 0.0f, 1.0f);
+            ImGui::SliderFloat("Roughness", &roughness, 0.0f, 1.0f);
+            ImGui::SliderFloat("Ambient Occlusin", &ao, 0.0f, 1.0f);
+            ImGui::SliderFloat3("Light Position", light_pos.data(), -1, 1);
+            ImGui::ColorEdit3("Light Color", light_col.data());
+            ImGui::Text("current_s: %i, %.2f FPS", current_s, io.Framerate);
+            ImGui::End();
+
+            ImGui::Render();
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+            window.swap();
+        }
+    } catch (int& e) {
+        std::cout << e << "\n";
     }
 }

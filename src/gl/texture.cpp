@@ -9,10 +9,11 @@
 using namespace ngi::gl;
 
 // adapted from learnopengl
-Texture::Texture(std::string const& path)
+Texture::Texture(std::string const& path, int active_texture)
 {
 
     glGenTextures(1, &name);
+    glActiveTexture(active_texture);
     glBindTexture(GL_TEXTURE_2D, name);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -39,14 +40,25 @@ Texture::Texture(std::string const& path)
         return;
     }
 
+    GLenum channels;
+    if (number_of_channels == 4) {
+        channels = GL_RGBA;
+    } else if (number_of_channels == 3) {
+        channels = GL_RGB;
+    } else if (number_of_channels == 2) {
+        channels = GL_RG;
+    } else if (number_of_channels == 1) {
+        channels = GL_R;
+    }
+
     glTexImage2D(
         GL_TEXTURE_2D,
         0,
-        GL_RGB,
+        GL_RGBA,
         size[0],
         size[1],
         0,
-        number_of_channels == 4 ? GL_RGBA : GL_RGB,
+        channels,
         GL_UNSIGNED_BYTE,
         data
     );
