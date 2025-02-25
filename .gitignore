@@ -18,5 +18,5 @@ deps/imgui
 .clang*
 .cache
 src/aux/png/stb_image.h
+res/minecraft/*
 res/images/*
-
