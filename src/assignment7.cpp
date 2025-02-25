@@ -207,11 +207,24 @@ int main(int argc, char** argv)
              {"../res/assignment_shaders/7_parallax.frag.glsl",
               GL_FRAGMENT_SHADER}}
         ));
+        shaders.push_back(ngi::gl::ShaderProgram(
+            {{"../res/assignment_shaders/7.vert.glsl", GL_VERTEX_SHADER},
+             {"../res/assignment_shaders/7_diff_cat.frag.glsl",
+              GL_FRAGMENT_SHADER}}
+        ));
+        shaders.push_back(ngi::gl::ShaderProgram(
+            {{"../res/assignment_shaders/7_parallax.vert.glsl", GL_VERTEX_SHADER
+             },
+             {"../res/assignment_shaders/7_parallax_cat.frag.glsl",
+              GL_FRAGMENT_SHADER}}
+        ));
         int diff_s{0};
         int norm_s{1};
         int disp_s{2};
         int ligh_s{3};
         int para_s{4};
+        int dcat_s{5};
+        int pcat_s{6};
 
         // setup geometry
         std::array<aa::vec3, 6> plane_positions{
@@ -294,9 +307,13 @@ int main(int argc, char** argv)
 
         // uniforms
         float metallic{0.5};
+        float metallic2{0.5};
         float roughness{0.5};
+        float roughness2{0.5};
         float ao{0.5};
+        float ao2{0.5};
         float height_scale{0.1};
+        float parallax_layers{128};
         aa::vec3 light_pos{0.5, 0.5, 1};
         aa::vec3 light_col{1, 1, 1};
 
@@ -320,7 +337,14 @@ int main(int argc, char** argv)
             shaders[current_s].update_uniform_1f("metallic", metallic);
             shaders[current_s].update_uniform_1f("roughness", roughness);
             shaders[current_s].update_uniform_1f("ao", ao);
+            shaders[current_s].update_uniform_1f("metallic2", metallic2);
+            shaders[current_s].update_uniform_1f("roughness2", roughness2);
+            shaders[current_s].update_uniform_1f("ao2", ao2);
             shaders[current_s].update_uniform_1f("height_scale", height_scale);
+            shaders[current_s].update_uniform_1f(
+                "parallax_layers",
+                parallax_layers
+            );
             shaders[current_s].update_uniform_vec3f(
                 "light_positions",
                 light_pos
@@ -347,14 +371,20 @@ int main(int argc, char** argv)
                 ImVec2(SettingsWindowWidth, SettingsWindowHeight)
             );
             ImGui::RadioButton("Diffuse", &current_s, diff_s);
+            ImGui::RadioButton("Diffuse Catagorize", &current_s, dcat_s);
             ImGui::RadioButton("Normal", &current_s, norm_s);
             ImGui::RadioButton("Displacement", &current_s, disp_s);
             ImGui::RadioButton("Flat Lighting", &current_s, ligh_s);
             ImGui::RadioButton("Parallax", &current_s, para_s);
+            ImGui::RadioButton("Parallax Catagorize", &current_s, pcat_s);
             ImGui::SliderFloat("Metallic", &metallic, 0.0f, 1.0f);
             ImGui::SliderFloat("Roughness", &roughness, 0.0f, 1.0f);
             ImGui::SliderFloat("Ambient Occlusin", &ao, 0.0f, 1.0f);
+            ImGui::SliderFloat("Grass Metallic", &metallic2, 0.0f, 1.0f);
+            ImGui::SliderFloat("Grass Roughness", &roughness2, 0.0f, 1.0f);
+            ImGui::SliderFloat("Grass Ambient Occlusin", &ao2, 0.0f, 1.0f);
             ImGui::SliderFloat("Height Scale", &height_scale, 0.0f, 1.0f);
+            ImGui::SliderFloat("Parallax Layers", &parallax_layers, 0, 1024);
             ImGui::SliderFloat3("Light Position", light_pos.data(), -1, 1);
             ImGui::ColorEdit3("Light Color", light_col.data());
             ImGui::Text("current_s: %i, %.2f FPS", current_s, io.Framerate);

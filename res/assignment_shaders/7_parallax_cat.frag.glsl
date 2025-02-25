@@ -23,8 +23,11 @@ uniform vec3 camera_position;
 
 // material props
 uniform float metallic;
+uniform float metallic2;
 uniform float roughness;
+uniform float roughness2;
 uniform float ao;
+uniform float ao2;
 uniform float height_scale;
 uniform float parallax_layers;
 
@@ -50,9 +53,22 @@ void main()
     vec3 albedo = texture(diff,puv).xyz;
     vec3 N = normalize(texture(norm, puv).xyz * 2.0 - 1.0);
 
+    // catagorize
+    vec3 d = texture(diff, uv).rgb;
+    float val = d.g - d.b;
+    float is_grass = step(0.2, val);
+
+    float c_metallic = metallic;
+    float c_roughness = roughness;
+    float c_ao = ao;
+    if (is_grass > 0.5) {
+        float c_metallic = metallic2;
+        float c_roughness = roughness2;
+        float c_ao = ao2;
+    }
 
     vec3 F0 = vec3(0.04); 
-    F0 = mix(F0, albedo, metallic);
+    F0 = mix(F0, albedo, c_metallic);
 	           
     // reflectance equation
     vec3 Lo = vec3(0.0);
@@ -66,13 +82,13 @@ void main()
         vec3 radiance     = light_colors[i] * attenuation;        
         
         // cook-torrance brdf
-        float NDF = distribution_ggx(N, H, roughness);        
-        float G   = geometry_smith(N, V, L, roughness);      
+        float NDF = distribution_ggx(N, H, c_roughness);        
+        float G   = geometry_smith(N, V, L, c_roughness);      
         vec3 F    = fresnel_schlick(max(dot(H, V), 0.0), F0);       
         
         vec3 kS = F;
         vec3 kD = vec3(1.0) - kS;
-        kD *= 1.0 - metallic;	  
+        kD *= 1.0 - c_metallic;	  
         
         vec3 numerator    = NDF * G * F;
         float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
@@ -83,7 +99,7 @@ void main()
         Lo += (kD * albedo / PI + specular) * radiance * NdotL; 
     }   
   
-    vec3 ambient = vec3(0.03) * albedo * ao;
+    vec3 ambient = vec3(0.03) * albedo * c_ao;
     vec3 color = ambient + Lo;
 	
     color = color / (color + vec3(1.0));
