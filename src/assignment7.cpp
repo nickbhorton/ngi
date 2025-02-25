@@ -201,10 +201,17 @@ int main(int argc, char** argv)
              {"../res/assignment_shaders/7_lighting.frag.glsl",
               GL_FRAGMENT_SHADER}}
         ));
+        shaders.push_back(ngi::gl::ShaderProgram(
+            {{"../res/assignment_shaders/7_parallax.vert.glsl", GL_VERTEX_SHADER
+             },
+             {"../res/assignment_shaders/7_parallax.frag.glsl",
+              GL_FRAGMENT_SHADER}}
+        ));
         int diff_s{0};
         int norm_s{1};
         int disp_s{2};
         int ligh_s{3};
+        int para_s{4};
 
         // setup geometry
         std::array<aa::vec3, 6> plane_positions{
@@ -215,16 +222,33 @@ int main(int argc, char** argv)
             GL_ARRAY_BUFFER
         };
 
-        std::array<aa::vec3, 6> plane_uvs{
+        std::array<aa::vec2, 6> plane_uvs{
             {{0, 0}, {0, 1}, {1, 1}, {1, 1}, {1, 0}, {0, 0}}
         };
-        ngi::gl::StaticBuffer<std::array<aa::vec3, 6>> plane_uvs_b{
+        ngi::gl::StaticBuffer<std::array<aa::vec2, 6>> plane_uvs_b{
             plane_uvs,
+            GL_ARRAY_BUFFER
+        };
+
+        std::array<aa::vec3, 6> plane_normals{
+            {{0, 0, 1}, {0, 0, 1}, {0, 0, 1}, {0, 0, 1}, {0, 0, 1}, {0, 0, 1}}
+        };
+        ngi::gl::StaticBuffer<std::array<aa::vec3, 6>> plane_normals_b{
+            plane_normals,
+            GL_ARRAY_BUFFER
+        };
+
+        std::array<aa::vec3, 6> plane_tangents{
+            {{1, 0, 0}, {1, 0, 0}, {1, 0, 0}, {1, 0, 0}, {1, 0, 0}, {1, 0, 0}}
+        };
+        ngi::gl::StaticBuffer<std::array<aa::vec3, 6>> plane_tangents_b{
+            plane_tangents,
             GL_ARRAY_BUFFER
         };
 
         // setup vao
         ngi::gl::VertexArrayObject plane_vao{};
+
         plane_vao.attach_buffer_object(
             plane_positions_b,
             0,
@@ -234,7 +258,17 @@ int main(int argc, char** argv)
             0
         );
         plane_vao
-            .attach_buffer_object(plane_uvs_b, 1, 3, GL_FLOAT, GL_FALSE, 0);
+            .attach_buffer_object(plane_uvs_b, 1, 2, GL_FLOAT, GL_FALSE, 0);
+        plane_vao
+            .attach_buffer_object(plane_normals_b, 2, 3, GL_FLOAT, GL_FALSE, 0);
+        plane_vao.attach_buffer_object(
+            plane_tangents_b,
+            3,
+            3,
+            GL_FLOAT,
+            GL_FALSE,
+            0
+        );
 
         // For my graphics to only render on left
         glViewport(0, 0, GraphicsWindowWidth, GraphicsWindowHeight);
@@ -262,6 +296,7 @@ int main(int argc, char** argv)
         float metallic{0.5};
         float roughness{0.5};
         float ao{0.5};
+        float height_scale{0.1};
         aa::vec3 light_pos{0.5, 0.5, 1};
         aa::vec3 light_col{1, 1, 1};
 
@@ -285,6 +320,7 @@ int main(int argc, char** argv)
             shaders[current_s].update_uniform_1f("metallic", metallic);
             shaders[current_s].update_uniform_1f("roughness", roughness);
             shaders[current_s].update_uniform_1f("ao", ao);
+            shaders[current_s].update_uniform_1f("height_scale", height_scale);
             shaders[current_s].update_uniform_vec3f(
                 "light_positions",
                 light_pos
@@ -313,10 +349,12 @@ int main(int argc, char** argv)
             ImGui::RadioButton("Diffuse", &current_s, diff_s);
             ImGui::RadioButton("Normal", &current_s, norm_s);
             ImGui::RadioButton("Displacement", &current_s, disp_s);
-            ImGui::RadioButton("Lighting", &current_s, ligh_s);
+            ImGui::RadioButton("Flat Lighting", &current_s, ligh_s);
+            ImGui::RadioButton("Parallax", &current_s, para_s);
             ImGui::SliderFloat("Metallic", &metallic, 0.0f, 1.0f);
             ImGui::SliderFloat("Roughness", &roughness, 0.0f, 1.0f);
             ImGui::SliderFloat("Ambient Occlusin", &ao, 0.0f, 1.0f);
+            ImGui::SliderFloat("Height Scale", &height_scale, 0.0f, 1.0f);
             ImGui::SliderFloat3("Light Position", light_pos.data(), -1, 1);
             ImGui::ColorEdit3("Light Color", light_col.data());
             ImGui::Text("current_s: %i, %.2f FPS", current_s, io.Framerate);

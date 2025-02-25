@@ -10,6 +10,7 @@ layout (location = 0) out vec4 frag_color;
 // from vertex shader
 in vec2 uv;
 in vec3 frag_pos;
+in mat3 tbn;
 
 // textures
 uniform sampler2D diff;
@@ -23,6 +24,7 @@ uniform vec3 camera_position;
 uniform float metallic;
 uniform float roughness;
 uniform float ao;
+uniform float height_scale;
 
 // lights
 #define LIGHT_COUNT 1
@@ -34,15 +36,18 @@ float distribution_ggx(vec3 N, vec3 H, float roughness);
 float geometry_schlick_ggx(float NdotV, float roughness);
 float geometry_smith(vec3 N, vec3 V, vec3 L, float roughness);
 vec3 fresnel_schlick(float cosTheta, vec3 F0);
+vec2 parallax_mapping(vec2 uv, vec3 V);
 
 void main()
 {		
-    vec3 albedo = texture(diff,uv).xyz;
+    // direction towards camera, view direction
+    vec3 V = tbn * normalize(camera_position - frag_pos);
+    vec2 puv = parallax_mapping(uv, V);
+    if (puv.x > 1.0 || puv.y > 1.0 || puv.x < 0.0 || puv.y < 0.0) discard;
 
-    // normal from texture
-    vec3 N = normalize(texture(norm, uv).xyz * 2.0 - 1.0);
-    // direction towards camera
-    vec3 V = normalize(camera_position - frag_pos);
+    vec3 albedo = texture(diff,puv).xyz;
+    vec3 N = normalize(texture(norm, puv).xyz * 2.0 - 1.0);
+
 
     vec3 F0 = vec3(0.04); 
     F0 = mix(F0, albedo, metallic);
@@ -122,4 +127,45 @@ float geometry_smith(vec3 N, vec3 V, vec3 L, float roughness)
 vec3 fresnel_schlick(float cosTheta, vec3 F0)
 {
     return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}
+
+vec2 parallax_mapping(vec2 uv, vec3 V) {
+    // number of depth layers
+    const float minLayers = 128.0;
+    const float maxLayers = 256.0;
+    float numLayers = mix(maxLayers, minLayers, max(dot(vec3(0.0, 0.0, 1.0), V), 0.0));
+    // calculate the size of each layer
+    float layerDepth = 1.0 / numLayers;
+    // depth of current layer
+    float currentLayerDepth = 0.0;
+    // the amount to shift the texture coordinates per layer (from vector P)
+    vec2 P = V.xy * height_scale; 
+    vec2 deltaTexCoords = P / numLayers;
+    // get initial values
+    vec2  currentTexCoords     = uv;
+    float currentDepthMapValue = 1.0 - texture(disp, currentTexCoords).r;
+      
+    while(currentLayerDepth < currentDepthMapValue)
+    {
+        // shift texture coordinates along direction of P
+        currentTexCoords -= deltaTexCoords;
+        // get depthmap value at current texture coordinates
+        currentDepthMapValue = 1.0 - texture(disp, currentTexCoords).r;  
+        // get depth of next layer
+        currentLayerDepth += layerDepth;  
+    }
+
+    // get texture coordinates before collision (reverse operations)
+    vec2 prevTexCoords = currentTexCoords + deltaTexCoords;
+
+    // get depth after and before collision for linear interpolation
+    float afterDepth  = currentDepthMapValue - currentLayerDepth;
+    float beforeDepth = (1.0 - texture(disp, prevTexCoords).r) - currentLayerDepth + layerDepth;
+     
+    // interpolation of texture coordinates
+    float weight = afterDepth / (afterDepth - beforeDepth);
+    vec2 finalTexCoords = prevTexCoords * weight + currentTexCoords * (1.0 - weight);
+
+
+    return currentTexCoords;
 }
